@@ -65,3 +65,25 @@
 (defun substituir (l c tabuleiro &optional (valor 1))
   (substituir-posicao l tabuleiro (substituir-posicao c (linha l tabuleiro) valor))
 )
+
+(defun peca-casas-ocupadas (x y tipo)
+  (cond ((eq tipo 'quadrado-1x1) (list (list x y)))
+        ((eq tipo 'quadrado-2x2) (list (list x y) (list x (+ y 1))(list (+ 1 x) y) (list (+ x 1) (+ y 1))))
+        ((eq tipo 'cruz) (list (list x (+ y 1)) (list (+ x 1) (+ y 1)) (list (+ x 2) (+ y 1))(list (+ x 1) y) (list (+ x 1)(+ y 2))))
+        (t nil))
+)
+
+(defun quadrado-1x1 (x y tabuleiro)
+  (cond ((verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'quadrado-1x1))  
+         (substituir x y tabuleiro))
+        (t nil))
+)
+
+(defun quadrado-2x2 (x y tabuleiro)
+  (cond ((verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2))
+         (mapcar #'(lambda (casa) (substituir (first casa) (second casa) tabuleiro)) (peca-casas-ocupadas x y 'quadrado-2x2))
+         )
+   )
+)
+
+
