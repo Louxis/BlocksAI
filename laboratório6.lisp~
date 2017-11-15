@@ -79,12 +79,11 @@
         (t nil))
 )
 
-
-
-(defun quadrado-2x2zeisgood (x y tabuleiro)
-(cond ((verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2))
-         (labels ((quadrado-aux (x y tabuleiro casas) 
-                  (if (null casas) (quadrado-1x1 x y tabuleiro) 
-                    (quadrado-aux (first (first casas)) (second (first casas)) (quadrado-1x1 x y tabuleiro) (cdr casas))))) (quadrado-aux x y tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2))))))
+(defun quadrado-2x2 (x y tabuleiro)
+  (cond ((verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2))
+         (mapcar #'(lambda (casa) (substituir (first casa) (second casa) tabuleiro)) (peca-casas-ocupadas x y 'quadrado-2x2))
+         )
+   )
+)
 
 
