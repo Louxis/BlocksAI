@@ -15,7 +15,21 @@
         (setq *open* (cdr *open*))
         ;Add expanded nodes to the *open* list
         (setq *open* (append *open* expandedNodes))
-        ;If one of them is a finishing node, stop the loop returning the 
+        ;If one of them is a finishing node, stop the loop returning the finish node
+        (if (not (null (finishNode expandedNodes))) (return (finishNode expandedNodes))))))
+
+;;DF search
+(defun df_it (node &optional p)
+  (setq *open* (append *open* node))  
+  (loop while (not (null *open*))
+        do 
+        (let ((currentNode (car *open*)) (expandedNodes (expandNode (car *open*))))
+        (setq *close* (append *close* currentNode)) 
+        ;Remove current node from *open*
+        (setq *open* (cdr *open*))
+        ;Add expanded nodes to the *open* list
+        (setq *open* (append expandedNodes *open*))
+        ;If one of them is a finishing node, stop the loop returning the finish node
         (if (not (null (finishNode expandedNodes))) (return (finishNode expandedNodes))))))
 
 
