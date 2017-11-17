@@ -65,7 +65,7 @@
 )
 
 (defun replace-board (x y board &optional (value 1))
-  (replace-position y board (replace-position y (line x board) value))
+  (replace-position x board (replace-position y (line x board) value))
 )
 
 (defun block-occupied-cells (x y block-type)
@@ -76,17 +76,15 @@
 )
 
 (defun square-1x1 (x y board)
-  (cond ((eq (empty-cellp x y board) t)  
+  (cond ((verify-empty-cells board (block-occupied-cells x y 'quadrado-1x1))  
          (replace-board x y board))
         (t nil))
 )
 
-(defun quadrado-2x2(x y tabuleiro)
-(cond ((eq (verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2)) t)
-         (labels ((quadrado-aux (x y tabuleiro casas) 
-                  (if (null casas) (quadrado-1x1 x y tabuleiro) 
-                    (quadrado-aux (first (first casas)) (second (first casas)) (quadrado-1x1 x y tabuleiro) (cdr casas))))) (quadrado-aux x y tabuleiro (peca-casas-ocupadas x y 'quadrado-2x2))))
-))
+(defun square-2x2(x y board)
+         (labels ((square-aux (x y board cells) 
+                  (if (null cells) (square-1x1 x y board) 
+                    (square-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells))))) (square-aux x y board (block-occupied-cells x y 'quadrado-2x2))))
 
 (defun cruz (x y tabuleiro)
 (cond ((eq (verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'cruz)) t)
