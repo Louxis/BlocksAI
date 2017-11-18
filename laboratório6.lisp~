@@ -56,7 +56,9 @@
    (t (nth x (line y board)))))
 
 (defun empty-cellp (x y board)
-  (cond ((not (= (board-cell x y board) 0)) nil)
+  (cond ((or (not (numberp x)) (not (numberp y))) nil)
+        ((or (< x 0) (< y 0)) nil)
+        ((not (= (board-cell x y board) 0)) nil)
         ((and (= (length (column 0 board)) x) (= (length (line 0 board)) y)) nil)
         (t t))
 )
@@ -65,9 +67,9 @@
   (mapcar #' (lambda (board-cell) (empty-cellp (first board-cell) (second board-cell) board)) positions)
 )
 
-(defun empty-positions (board positions)
+(defun empty-positions (board positions)  
   (apply #'append 
-  (mapcar #' (lambda (board-cell &aux (empty (empty-cellp (first board-cell) (second board-cell) board)))
+  (mapcar #' (lambda (board-cell &aux (empty (empty-cellp (first board-cell) (second board-cell) board)))               
                (if (and empty (cell-inbounds (first board-cell) (second board-cell) board)) (list board-cell))) positions)))
 
 (defun replace-position (index board-list &optional (value 1))
@@ -108,11 +110,12 @@
            (cross-aux (1+ x) (1+ y) board (block-occupied-cells x y 'cruz))))
 
 (defun cell-inbounds (x y board)
+  
   (cond ((and (and (> y 0) (< y (1- (length (line 0 board))))) (and (> x 0) (< x (1- (length (column 0 board)))))) t)
         (t nil)))
 
 (defun possible-diagonals (x y board block-type)
-  (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y) board) (list (1- x) (1+ y) board) (list (1+ x) (1- y) board) (list (1+ x) (1+ y) board)))))
+  (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) (list (1+ x) (1- y)) (list (1+ x) (1+ y))))))
 )
 
 (defun possible-block-positions (board)
