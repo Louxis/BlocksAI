@@ -13,8 +13,8 @@
 (defun open-dfs (open child)
   (append child open))
 
-;;;BF Search
-(defun bfs (node solucao expand operators &optional (d nil))
+;;;BF Search Iterative
+(defun bfs-it (node solution expand operators &optional (d nil))
   (setq *open* (list node))
   (setq *close* nil)
   (loop while (not (null *open*)) do
@@ -26,11 +26,20 @@
           ;Add expanded nodes to open
           (setq *open* (open-bfs *open* expandedNodes))
           ;Check if a node is a possible solution and return it
-          (mapcar #'(lambda (nodeit) (if (funcall solucao nodeit) (return nodeit))) expandedNodes))))
+          (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (return nodeit))) expandedNodes))))
+
+;;;BF Search Recursive
+(defun bfs-rec (node solution expand operatores)
+  (labels ((bfs-aux (node solution expand operatores open close)
+             (let ((expandedNodes (funcall expand node operatores 'bfs nil)))
+             (cond ((null open) nil)
+                   ((funcall solution node) node)
+                   (t (bfs-aux (car open) solution expand operatores (open-bfs (cdr open) expandedNodes) (append close (list node))))))))
+    (bfs-aux node solution expand operatores (list node) nil)))
 
 
 ;;;DF Search
-(defun dfs (node solucao expand operators p)
+(defun dfs (node solution expand operators p)
    (setq *open* (list node))
    (setq *close* nil)
   (loop while (not (null *open*)) do
@@ -42,4 +51,13 @@
           ;Add expanded nodes to open
           (setq *open* (open-dfs *open* expandedNodes))
           ;Check if a node is a possible solution and return it
-          (mapcar #'(lambda (nodeit) (if (funcall solucao nodeit) (return nodeit))) expandedNodes))))
+          (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (return nodeit))) expandedNodes))))
+
+;;;DF Search Recursive
+(defun dfs-rec (node solution expand operatores)
+  (labels ((bfs-aux (node solution expand operatores open close)
+             (let ((expandedNodes (funcall expand node operatores 'bfs nil)))
+             (cond ((null open) nil)
+                   ((funcall solution node) node)
+                   (t (bfs-aux (car open) solution expand operatores (open-dfs (cdr open) expandedNodes) (append close (list node))))))))
+    (bfs-aux node solution expand operatores (list node) nil)))
