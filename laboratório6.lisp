@@ -134,3 +134,6 @@
                    (t (possible-pos-aux (1+ x) y board)))))
     
     (apply #'append (possible-pos-aux 0 0 board))))
+
+(defun equal-coords (coorda coordb)
+  (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))
