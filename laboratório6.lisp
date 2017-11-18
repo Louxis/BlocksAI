@@ -36,25 +36,39 @@
 
 ;;; Exercicios
 (defun line (index board)
-  (nth index board)
+  (cond
+   ((not (numberp index)) nil)
+   ((< index 0) nil)
+   (t (nth index board))
+  )
 )
 
 (defun column (index board)
-  (mapcar #'(lambda (line &aux (n-column (nth index line))) n-column) board)
-)
+(cond
+  ((not (numberp index)) nil)
+  ((< index 0) nil)
+  (t (mapcar #'(lambda (line &aux (n-column (nth index line))) n-column) board))))
 
 (defun board-cell (x y board)
-  (nth x (line y board))
-)
+  (cond
+   ((or (not (numberp x)) (not (numberp y))) nil)
+   ((or (< x 0) (< y 0)) nil)
+   (t (nth x (line y board)))))
 
 (defun empty-cellp (x y board)
   (cond ((not (= (board-cell x y board) 0)) nil)
+        ((and (= (length (column 0 board)) x) (= (length (line 0 board)) y)) nil)
         (t t))
 )
 
 (defun verify-empty-cells (board positions)
   (mapcar #' (lambda (board-cell) (empty-cellp (first board-cell) (second board-cell) board)) positions)
 )
+
+(defun empty-positions (board positions)
+  (apply #'append 
+  (mapcar #' (lambda (board-cell &aux (empty (empty-cellp (first board-cell) (second board-cell) board)))
+               (if (and empty (cell-inbounds (first board-cell) (second board-cell) board)) (list board-cell))) positions)))
 
 (defun replace-position (index board-list &optional (value 1))
   (cond ((or(null board-list) (not (numberp index))) nil)
@@ -86,21 +100,29 @@
                   (if (null cells) (square-1x1 x y board) 
                     (square-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells))))) (square-aux x y board (block-occupied-cells x y 'quadrado-2x2))))
 
-(defun cruz (x y tabuleiro)
-(cond ((eq (verifica-casas-vazias tabuleiro (peca-casas-ocupadas x y 'cruz)) t)
-         (labels ((quadrado-aux (x y tabuleiro casas) 
-                  (if (null casas) (quadrado-1x1 x y tabuleiro) 
-                    (quadrado-aux (first (first casas)) (second (first casas)) (quadrado-1x1 x y tabuleiro) (cdr casas))))) (quadrado-aux x y tabuleiro (peca-casas-ocupadas x y 'cruz)))
-       (t nil))))
+;;senpai might want to clean this...thing
+(defun cross (x y board)
+         (labels ((cross-aux (x y board cells) 
+                  (if (null cells) (square-1x1 x y board) 
+                    (cross-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells)))))
+           (cross-aux (1+ x) (1+ y) board (block-occupied-cells x y 'cruz))))
 
-(defun percorrer (board)
-  (labels ((percorrer-aux (x y board) 
-             (cond ((= x 14) (percorrer-aux 0 (1+ y) board))
+(defun cell-inbounds (x y board)
+  (cond ((and (and (> y 0) (< y (1- (length (line 0 board))))) (and (> x 0) (< x (1- (length (column 0 board)))))) t)
+        (t nil)))
+
+(defun possible-diagonals (x y board block-type)
+  (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y) board) (list (1- x) (1+ y) board) (list (1+ x) (1- y) board) (list (1+ x) (1+ y) board)))))
+)
+
+(defun possible-block-positions (board)
+  (labels ((possible-pos-aux (x y board) 
+             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
-                   ((= (celula x y board) 1) (cons (list (list x y)) (percorrer-aux (1+ x) y board)))
-                   (t (percorrer-aux (1+ x) y board)))))
+                   ((= (cell x y board) 1) (cons (list (list x y)) (possible-pos-aux (1+ x) y board)))
+                   (t (possible-pos-aux (1+ x) y board)))))
     
-    (apply #'append (percorrer-aux 0 0 board))))
+    (apply #'append (possible-pos-aux 0 0 board))))
 
 
 
