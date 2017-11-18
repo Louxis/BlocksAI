@@ -44,12 +44,16 @@
 )
 
 (defun column (index board)
-  (mapcar #'(lambda (line &aux (n-column (nth index line))) n-column) board)
-)
+(cond
+  ((not (numberp index)) nil)
+  ((< index 0) nil)
+  (t (mapcar #'(lambda (line &aux (n-column (nth index line))) n-column) board))))
 
 (defun board-cell (x y board)
-  (nth x (line y board))
-)
+  (cond
+   ((or (not (numberp x)) (not (numberp y))) nil)
+   ((or (< x 0) (< y 0)) nil)
+   (t (nth x (line y board)))))
 
 (defun empty-cellp (x y board)
   (cond ((not (= (board-cell x y board) 0)) nil)
