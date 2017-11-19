@@ -58,8 +58,8 @@
 (defun empty-cellp (x y board)
   (cond ((or (not (numberp x)) (not (numberp y))) nil)
         ((or (< x 0) (< y 0)) nil)
-        ((not (= (board-cell x y board) 0)) nil)
-        ((and (= (length (column 0 board)) x) (= (length (line 0 board)) y)) nil)
+        ((not (eq (board-cell x y board) 0)) nil)
+        ;;((and (= (length (column 0 board)) x) (= (length (line 0 board)) y)) nil)
         (t t))
 )
 
@@ -110,22 +110,30 @@
            (cross-aux (1+ x) (1+ y) board (block-occupied-cells x y 'cruz))))
 
 (defun cell-inbounds (x y board)
-  
-  (cond ((and (and (> y 0) (< y (1- (length (line 0 board))))) (and (> x 0) (< x (1- (length (column 0 board)))))) t)
+  (cond ((and (and (>= y 0) (<= y (1- (length (line 0 board))))) (and (>= x 0) (<= x (1- (length (column 0 board)))))) t)
         (t nil)))
 
 (defun possible-diagonals (x y board block-type)
   (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) (list (1+ x) (1- y)) (list (1+ x) (1+ y))))))
 )
 
-(defun possible-block-positions (board)
+(defun not-adjacent-pos (x y board block-type)
+  (cond ((and (eq block-type 'quadrado-1x1) (and (not (eq (board-cell x (1- y) board) 1)) (not (eq (board-cell x (1+ y) board) 1)) (not(eq (board-cell (1- x) y board) 1)) (not(eq (board-cell (1+ x) y board) 1)))) t))
+)
+
+(defun valid-diagonals (diagonal-positions board block-type)
+  (apply #'append(mapcar #'(lambda (position) (cond ((not-adjacent-pos (first position) (second position) board block-type) (list position)))) diagonal-positions))
+)
+
+
+(defun possible-block-positions (board block-type)
   (labels ((possible-pos-aux (x y board) 
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
-                   ((= (cell x y board) 1) (cons (list (list x y)) (possible-pos-aux (1+ x) y board)))
+                   ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
                    (t (possible-pos-aux (1+ x) y board)))))
     
     (apply #'append (possible-pos-aux 0 0 board))))
 
-
-
+(defun equal-coords (coorda coordb)
+  (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))
