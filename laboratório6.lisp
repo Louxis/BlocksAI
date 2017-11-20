@@ -147,3 +147,13 @@
                (cond ((null nodes) nil)
                      (t (cons (invert-node (car nodes)) (invert-nodes (cdr nodes))))))))
     (append nodes (invert-nodes nodes))))
+
+;;Checks if there is any "1" piece on the board
+(defun empty-boardp (board)
+  (labels ((possible-pos-aux (x y board) 
+             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
+                   ((= y 14) t)
+                   ((= (board-cell x y board) 1) nil )
+                   (t (possible-pos-aux (1+ x) y board)))))
+    
+    (possible-pos-aux 0 0 board)))
