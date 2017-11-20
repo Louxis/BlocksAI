@@ -115,12 +115,13 @@
 
 (defun possible-diagonals (x y board block-type)
   (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) (list (1+ x) (1- y)) (list (1+ x) (1+ y)))))
-        ((eq block-type 'quadrado-2x2) (empty-positions board (list (list (- x 2) (- y 2)) (list (+ x 1) (- y 2)) (list (- x 2) (+ y 1)) (list (+ x 1) (+ y 1))))))
-)
+        ((eq block-type 'quadrado-2x2) (empty-positions board (list (list (- x 2) (- y 2)) (list (+ x 1) (- y 2)) (list (- x 2) (+ y 1)) (list (+ x 1) (+ y 1)))))
+        ((eq block-type 'cruz) (empty-positions board (list (list (- x 3) (- y 2)) (list x (- y 3)) (list (+ x 1) y) (list (- x 2) (+ y 1)) (list (- x 3) y) (list x (+ y 1)) (list x (+ y 1)) (list (+ x 1) (- y 2)) (list (- x 2) (- y 3)))))))
 
 (defun not-adjacent-pos (x y board block-type)
   (cond ((and (eq block-type 'quadrado-1x1) (and (not (eq (board-cell x (1- y) board) 1)) (not (eq (board-cell x (1+ y) board) 1)) (not(eq (board-cell (1- x) y board) 1)) (not(eq (board-cell (1+ x) y board) 1)))) t)
-        ((and (eq block-type 'quadrado-2x2) (and (not (eq (board-cell x (- y 1) board) 1)) (not (eq (board-cell (+ x 1) (- y 1)board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (+ x 2) (+ y 1) board)1)) (not (eq (board-cell (+ x 1) (+ y 2) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (- x 1) y board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type))) )) t))
+        ((and (eq block-type 'quadrado-2x2) (and (not (eq (board-cell x (- y 1) board) 1)) (not (eq (board-cell (+ x 1) (- y 1)board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (+ x 2) (+ y 1) board)1)) (not (eq (board-cell (+ x 1) (+ y 2) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (- x 1) y board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type))) )) t)
+        ((and (eq block-type 'cruz) (not (eq (board-cell x y board) 1)) (not (eq (board-cell (+ x 1) (- y 1) board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (+ x 3) (+ y 1) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (+ x 2) (+ y 2) board) 1)) (not (eq (board-cell (+ x 1) (+ y 3) board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type)))) t))
 )
 
 (defun valid-diagonals (diagonal-positions board block-type)
