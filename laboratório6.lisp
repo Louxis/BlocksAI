@@ -135,14 +135,14 @@
 
 (defun possible-block-positions (board block-type)
   (labels ((possible-pos-aux (x y board) 
-             (cond ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list (list 0 0) (list 0 13) (list 13 0) (list 13 13)))
-                   ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) (list (list 0 0) (list 0 12) (list 12 0) (list 12 12)))
-                   ((= x 14) (possible-pos-aux 0 (1+ y) board))
+             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
-                   (t (possible-pos-aux (1+ x) y board)))))
-    
-    (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))
+                   (t (possible-pos-aux (1+ x) y board)))))    
+    (cond ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
+          ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
+          ((and (eq block-type 'cruz) (empty-boardp board)) nil)
+          (t (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))))
 
 (defun equal-coords (coorda coordb)
   (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))

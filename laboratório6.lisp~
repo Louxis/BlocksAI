@@ -1,3 +1,7 @@
+
+
+
+
 ;;;; laboratorio6.lisp
 ;;;; Disciplina de IA - 2017 / 2018
 ;;;; Ficha de Laboratório nº6 - Apoio ao 1º projeto
@@ -131,7 +135,9 @@
 
 (defun possible-block-positions (board block-type)
   (labels ((possible-pos-aux (x y board) 
-             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
+             (cond ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list (list 0 0) (list 0 13) (list 13 0) (list 13 13)))
+                   ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) (list (list 0 0) (list 0 12) (list 12 0) (list 12 12)))
+                   ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
                    (t (possible-pos-aux (1+ x) y board)))))
@@ -147,3 +153,13 @@
                (cond ((null nodes) nil)
                      (t (cons (invert-node (car nodes)) (invert-nodes (cdr nodes))))))))
     (append nodes (invert-nodes nodes))))
+
+;;Checks if there is any "1" piece on the board
+(defun empty-boardp (board)
+  (labels ((possible-pos-aux (x y board) 
+             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
+                   ((= y 14) t)
+                   ((= (board-cell x y board) 1) nil )
+                   (t (possible-pos-aux (1+ x) y board)))))
+    
+    (possible-pos-aux 0 0 board)))
