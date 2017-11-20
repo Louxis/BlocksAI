@@ -139,3 +139,10 @@
 
 (defun equal-coords (coorda coordb)
   (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))
+
+(defun invert-append (nodes)
+  (labels ((invert-nodes (nodes)
+             (labels ((invert-node (node) (list (second node) (first node))))
+               (cond ((null nodes) nil)
+                     (t (cons (invert-node (car nodes)) (invert-nodes (cdr nodes))))))))
+    (append nodes (invert-nodes nodes))))
