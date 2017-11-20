@@ -16,7 +16,7 @@
 )
 
 (defun test-board ()
-  "Retorna um tabuleiro de teste 14x14 com 4 quadrados 1x1, 1 quadrado 2x2 e 1 cruz"
+  "Retorna um tabuleiro de teste 14x14 com 4 square 1x1, 1 square 2x2 e 1 cross"
 	'(
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
@@ -89,14 +89,14 @@
 )
 
 (defun block-occupied-cells (x y block-type)
-  (cond ((eq block-type 'quadrado-1x1) (list (list x y)))
-        ((eq block-type 'quadrado-2x2) (list (list x y) (list x (+ y 1))(list (+ 1 x) y) (list (+ x 1) (+ y 1))))
-        ((eq block-type 'cruz) (list (list x (+ y 1)) (list (+ x 1) (+ y 1)) (list (+ x 2) (+ y 1))(list (+ x 1) y) (list (+ x 1)(+ y 2))))
+  (cond ((eq block-type 'square-1x1) (list (list x y)))
+        ((eq block-type 'square-2x2) (list (list x y) (list x (+ y 1))(list (+ 1 x) y) (list (+ x 1) (+ y 1))))
+        ((eq block-type 'cross) (list (list x (+ y 1)) (list (+ x 1) (+ y 1)) (list (+ x 2) (+ y 1))(list (+ x 1) y) (list (+ x 1)(+ y 2))))
         (t nil))
 )
 
 (defun square-1x1 (x y board)
-  (cond ((verify-empty-cells board (block-occupied-cells x y 'quadrado-1x1))  
+  (cond ((verify-empty-cells board (block-occupied-cells x y 'square-1x1))  
          (replace-board x y board))
         (t nil))
 )
@@ -104,28 +104,28 @@
 (defun square-2x2(x y board)
          (labels ((square-aux (x y board cells) 
                   (if (null cells) (square-1x1 x y board) 
-                    (square-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells))))) (square-aux x y board (block-occupied-cells x y 'quadrado-2x2))))
+                    (square-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells))))) (square-aux x y board (block-occupied-cells x y 'square-2x2))))
 
 ;;senpai might want to clean this...thing
 (defun cross (x y board)
          (labels ((cross-aux (x y board cells) 
                   (if (null cells) (square-1x1 x y board) 
                     (cross-aux (first (first cells)) (second (first cells)) (square-1x1 x y board) (cdr cells)))))
-           (cross-aux (1+ x) (1+ y) board (block-occupied-cells x y 'cruz))))
+           (cross-aux (1+ x) (1+ y) board (block-occupied-cells x y 'cross))))
 
 (defun cell-inbounds (x y board)
   (cond ((and (and (>= y 0) (<= y (1- (length (line 0 board))))) (and (>= x 0) (<= x (1- (length (column 0 board)))))) t)
         (t nil)))
 
 (defun possible-diagonals (x y board block-type)
-  (cond ((eq block-type 'quadrado-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) (list (1+ x) (1- y)) (list (1+ x) (1+ y)))))
-        ((eq block-type 'quadrado-2x2) (empty-positions board (list (list (- x 2) (- y 2)) (list (+ x 1) (- y 2)) (list (- x 2) (+ y 1)) (list (+ x 1) (+ y 1)))))
-        ((eq block-type 'cruz) (empty-positions board (list (list (- x 3) (- y 2)) (list x (- y 3)) (list (+ x 1) y) (list (- x 2) (+ y 1)) (list (- x 3) y) (list x (+ y 1)) (list x (+ y 1)) (list (+ x 1) (- y 2)) (list (- x 2) (- y 3)))))))
+  (cond ((eq block-type 'square-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) (list (1+ x) (1- y)) (list (1+ x) (1+ y)))))
+        ((eq block-type 'square-2x2) (empty-positions board (list (list (- x 2) (- y 2)) (list (+ x 1) (- y 2)) (list (- x 2) (+ y 1)) (list (+ x 1) (+ y 1)))))
+        ((eq block-type 'cross) (empty-positions board (list (list (- x 3) (- y 2)) (list x (- y 3)) (list (+ x 1) y) (list (- x 2) (+ y 1)) (list (- x 3) y) (list x (+ y 1)) (list x (+ y 1)) (list (+ x 1) (- y 2)) (list (- x 2) (- y 3)))))))
 
 (defun not-adjacent-pos (x y board block-type)
-  (cond ((and (eq block-type 'quadrado-1x1) (and (not (eq (board-cell x (1- y) board) 1)) (not (eq (board-cell x (1+ y) board) 1)) (not(eq (board-cell (1- x) y board) 1)) (not(eq (board-cell (1+ x) y board) 1)))) t)
-        ((and (eq block-type 'quadrado-2x2) (and (not (eq (board-cell x (- y 1) board) 1)) (not (eq (board-cell (+ x 1) (- y 1)board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (+ x 2) (+ y 1) board)1)) (not (eq (board-cell (+ x 1) (+ y 2) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (- x 1) y board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type))) )) t)
-        ((and (eq block-type 'cruz) (not (eq (board-cell x y board) 1)) (not (eq (board-cell (+ x 1) (- y 1) board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (+ x 3) (+ y 1) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (+ x 2) (+ y 2) board) 1)) (not (eq (board-cell (+ x 1) (+ y 3) board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type)))) t))
+  (cond ((and (eq block-type 'square-1x1) (and (not (eq (board-cell x (1- y) board) 1)) (not (eq (board-cell x (1+ y) board) 1)) (not(eq (board-cell (1- x) y board) 1)) (not(eq (board-cell (1+ x) y board) 1)))) t)
+        ((and (eq block-type 'square-2x2) (and (not (eq (board-cell x (- y 1) board) 1)) (not (eq (board-cell (+ x 1) (- y 1)board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (+ x 2) (+ y 1) board)1)) (not (eq (board-cell (+ x 1) (+ y 2) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (- x 1) y board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type))) )) t)
+        ((and (eq block-type 'cross) (not (eq (board-cell x y board) 1)) (not (eq (board-cell (+ x 1) (- y 1) board) 1)) (not (eq (board-cell (+ x 2) y board) 1)) (not (eq (board-cell (- x 1) (+ y 1) board) 1)) (not (eq (board-cell (+ x 3) (+ y 1) board) 1)) (not (eq (board-cell x (+ y 2) board) 1)) (not (eq (board-cell (+ x 2) (+ y 2) board) 1)) (not (eq (board-cell (+ x 1) (+ y 3) board) 1)) (eq (length (empty-positions board (block-occupied-cells x y block-type))) (length (block-occupied-cells x y block-type)))) t))
 )
 
 (defun valid-diagonals (diagonal-positions board block-type)
@@ -139,9 +139,9 @@
                    ((= y 14) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
                    (t (possible-pos-aux (1+ x) y board)))))    
-    (cond ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
-          ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
-          ((and (eq block-type 'cruz) (empty-boardp board)) nil)
+    (cond ((and (eq block-type 'square-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
+          ((and (eq block-type 'square-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
+          ((and (eq block-type 'cross) (empty-boardp board)) nil)
           (t (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))))
 
 (defun equal-coords (coorda coordb)
