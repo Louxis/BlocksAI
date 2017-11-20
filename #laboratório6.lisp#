@@ -4,7 +4,7 @@
 
 ;;;; laboratorio6.lisp
 ;;;; Disciplina de IA - 2017 / 2018
-;;;; Ficha de Laboratório nº6 - Apoio ao 1º projeto
+;;;; Ficha de LaboratÃ³rio nÂº6 - Apoio ao 1Âº projeto
 ;;;; Autor: 
 
 
@@ -135,10 +135,10 @@
 
 (defun possible-block-positions (board block-type)
   (labels ((possible-pos-aux (x y board) 
-             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
+             (cond ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list (list 0 0) (list 0 13) (list 13 0) (list 13 13)))
+                   ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) (list (list 0 0) (list 0 12) (list 12 0) (list 12 12)))
+                   ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
-                   ((and (eq block-type 'quadrado-1x1) (empty-boardp board)) (list '(0 0) (list 0 (- (length (column 0 board)) 1)) (list (- (length (line 0 board)) 1) 0) (list (- (length (line 0 board)) 1) (- (length (column 0 board)) 1))))
-                   ((and (eq block-type 'quadrado-2x2) (empty-boardp board)) (list '(0 0) (list 0 (- (length (column 0 board)) 2)) (list (- (length (line 0 board)) 2) 0) (list (- (length (line 0 board)) 2) (- (length (column 0 board)) 2))))
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
                    (t (possible-pos-aux (1+ x) y board)))))
     
