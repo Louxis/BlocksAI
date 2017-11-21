@@ -10,6 +10,10 @@
 	(make-list board-size :initial-element (make-list board-size :initial-element '0))
 )
 
+(defun print-board (board)
+  (cond ((eq (length board) 1) (format t "~d~%" (car board)))
+        (t (format t "~d~%" (car board)) (print-board (cdr board)))))
+
 (defun test-board-a ()
 	'(
 	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
