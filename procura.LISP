@@ -17,9 +17,9 @@
 (defun bfs-it (node solution expand operators &optional (d nil))
   (setq *open* (list node))
   (setq *close* nil)
+  (print "NODE")
   (loop while (not (null *open*)) do
-        (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'bfs d)))
-          (print "NODE") (print expandedNodes)
+        (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'bfs d)))          
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open

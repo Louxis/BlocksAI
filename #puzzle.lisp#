@@ -147,17 +147,16 @@
 
 (defun solution-nodep (node) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
-        ((not (not (member nil (expand node (operators) nil))))  (print "HELLO CAN YOU HEAR ME? ")(print (node-pieces (node-state node))) t)
+        ((not (not (member nil (expand node (operators) nil)))) t)
         (t nil)))
 
 (defun expand (node operators search &optional (d 0))
   (flet ((expand-node (node operation)
            (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
              (mapcar #'(lambda (position) 
-                         ;(print-board (car (funcall operation (first position) (second position) node)))
-                         (let ((state (funcall operation (first position) (second position) node)))
-                           (print "state is ") (print state)
-                           (if (not (null state)) (create-node state node (1+ (node-depth node)) 0 0 0) nil)))
+                         ;;(print-board (car (funcall operation (first position) (second position) node)))
+                         (let ((state (funcall operation (first position) (second position) node)))                           
+                           (if (not (null state)) (create-node state node (1+ (node-depth node)) 0 0 0))))
                      positions))))
     (mapcar #'(lambda(operation) (expand-node node operation)) operators)))
 
@@ -236,11 +235,10 @@
 
 ;;Checks if there is any "1" piece on the board
 (defun empty-boardp (board)
-  (print "HELLO? CAN YOU HEAR ME?")
   (labels ((possible-pos-aux (x y board) 
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) t)                   
-                   ((= (board-cell x y board) 1) (print "ARE YOU OKAY?") nil )
+                   ((eq (board-cell x y board) 1) nil )
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
 ;;;End expand aux
