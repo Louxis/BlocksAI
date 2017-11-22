@@ -1,5 +1,5 @@
 ;;;;Searching algorithms
-;;;;Made by José Pereira and Lyudmyla Todoriko
+;;;;Made by JosÃ© Pereira and Lyudmyla Todoriko
 ;;;;The node structure is {(board) (pieces remaining) (parent node) (g) (optional h and f)
 
 ;;;Global variables

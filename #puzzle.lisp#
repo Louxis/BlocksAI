@@ -1,6 +1,6 @@
 ;;;;Puzzle file
 ;;;;IA
-;;;;José Pereira e Lyudmyla Todoriko
+;;;;JosÃ© Pereira e Lyudmyla Todoriko
 ;;;;
 
 ;;;Board 
@@ -156,6 +156,7 @@
              (mapcar #'(lambda (position) 
                          ;(print-board (car (funcall operation (first position) (second position) node)))
                          (let ((state (funcall operation (first position) (second position) node)))
+                           (print "state is ") (print state)
                            (if (not (null state)) (create-node state node (1+ (node-depth node)) 0 0 0) nil)))
                      positions))))
     (mapcar #'(lambda(operation) (expand-node node operation)) operators)))

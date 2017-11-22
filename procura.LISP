@@ -19,6 +19,7 @@
   (setq *close* nil)
   (loop while (not (null *open*)) do
         (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'bfs d)))
+          (print "NODE") (print expandedNodes)
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open

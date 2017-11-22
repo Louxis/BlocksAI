@@ -123,12 +123,12 @@
               (not (eq (board-cell (1+ x) y board) 1))) t)
         ((and (eq block-type 'square-2x2) 
               (not (eq (board-cell x (- y 1) board) 1)) 
-              (not (eq (board-cell (+ x 1) (- y 1)board) 1)) 
-              (not (eq (board-cell (+ x 2) y board) 1)) 
+              (not (eq (board-cell (+ x 1) (- y 1)board) 1)) ;; 
+              (not (eq (board-cell (+ x 2) y board) 1)) ;;
               (not (eq (board-cell (+ x 2) (+ y 1) board)1)) 
               (not (eq (board-cell (+ x 1) (+ y 2) board) 1)) 
               (not (eq (board-cell x (+ y 2) board) 1)) 
-              (not (eq (board-cell (- x 1) (+ y 1) board) 1)) 
+              (not (eq (board-cell (- x 1) (+ y 1) board) 1)) ;; 
               (not (eq (board-cell (- x 1) y board) 1)) 
               (eq (length (empty-positions board (block-occupied-cells x y block-type))) 
                   (length (block-occupied-cells x y block-type)))) t)
