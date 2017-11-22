@@ -32,6 +32,27 @@
 	(1 0 1 2 1 2 0 2 0 2 0 0 2 2)
 	))
 
+(defun test-board-complete ()
+	'(
+	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
+	(0 0 0 0 2 2 0 2 2 2 0 2 2 2)
+	(0 0 0 2 0 0 2 0 2 0 2 0 2 0)
+	(0 2 2 0 0 2 2 2 0 2 2 2 0 2)
+	(0 2 2 0 2 0 2 0 2 0 2 0 2 0)
+	(0 0 0 2 2 2 0 2 2 2 0 2 2 2)
+	(0 2 2 0 2 0 2 0 2 0 2 0 2 0)
+	(0 2 2 0 0 2 2 2 0 2 2 2 0 2)
+	(0 1 1 0 2 0 2 0 2 0 2 0 2 0)
+	(0 1 1 2 2 2 0 2 2 2 0 2 2 2)
+	(0 1 2 1 2 1 2 0 2 0 2 0 2 0)
+	(1 2 2 2 1 2 2 2 0 2 2 2 0 0)
+	(0 1 2 1 0 0 2 0 2 0 2 0 2 2)
+	(1 0 1 2 1 2 0 2 0 2 0 0 2 2)
+	))
+
+(defun test-node-complete ()
+  (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+
 (defun replace-position (index board-list &optional (value 1))
   (cond ((or(null board-list) (not (numberp index))) nil)
         ((or (< index 0) (> index (length board-list))) nil)
@@ -46,7 +67,7 @@
 ;;;Node 
 
 (defun test-node ()
-  (list (list (test-board-a)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (empty-board)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun node-print (node)
   (format t "~d~%" (node-pieces (node-state node))))
@@ -124,17 +145,18 @@
 
 ;;;Expand
 
-(defun solution-nodep (node)
+(defun solution-nodep (node) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
-        ((null (expand node (operators) nil)) t)
+        ((not (not (member nil (expand node (operators) nil)))) t)
         (t nil)))
 
 (defun expand (node operators search &optional (d 0))
   (flet ((expand-node (node operation)
            (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
              (mapcar #'(lambda (position) 
-                         ;(print-board (car (funcall operation (first position) (second position) node)))
-                         (create-node (funcall operation (first position) (second position) node) node (1+ (node-depth node)) 0 0 0))
+                         ;;(print-board (car (funcall operation (first position) (second position) node)))
+                         (let ((state (funcall operation (first position) (second position) node)))                           
+                           (if (not (null state)) (create-node state node (1+ (node-depth node)) 0 0 0))))
                      positions))))
     (mapcar #'(lambda(operation) (expand-node node operation)) operators)))
 
@@ -194,11 +216,12 @@
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
-                   (t (possible-pos-aux (1+ x) y board)))))    
-;    (cond ((and (eq block-type 'square-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
-;          ((and (eq block-type 'square-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
-;          ((and (eq block-type 'cross) (empty-boardp board)) nil)
-;          (t (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))))
+                   (t (possible-pos-aux (1+ x) y board)))))  
+    (print block-type)(print 'square-2x2)
+    (cond ((and (eq block-type 'square-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
+          ((and (equal block-type 'square-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
+          ((and (eq block-type 'cross) (empty-boardp board)) nil)
+          (t (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))
     (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))
 
 (defun equal-coords (coorda coordb)
@@ -213,11 +236,10 @@
 
 ;;Checks if there is any "1" piece on the board
 (defun empty-boardp (board)
-  (print "HELLO? CAN YOU HEAR ME?")
   (labels ((possible-pos-aux (x y board) 
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) t)                   
-                   ((= (board-cell x y board) 1) (print "ARE YOU OKAY?") nil )
+                   ((eq (board-cell x y board) 1) nil )
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
 ;;;End expand aux
