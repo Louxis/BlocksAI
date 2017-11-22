@@ -67,7 +67,7 @@
 ;;;Node 
 
 (defun test-node ()
-  (list (list (test-board-a)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (empty-board)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun node-print (node)
   (format t "~d~%" (node-pieces (node-state node))))
@@ -154,7 +154,7 @@
   (flet ((expand-node (node operation)
            (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
              (mapcar #'(lambda (position) 
-                         ;(print-board (car (funcall operation (first position) (second position) node)))
+                         ;;(print-board (car (funcall operation (first position) (second position) node)))
                          (let ((state (funcall operation (first position) (second position) node)))                           
                            (if (not (null state)) (create-node state node (1+ (node-depth node)) 0 0 0))))
                      positions))))
@@ -216,9 +216,10 @@
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
-                   (t (possible-pos-aux (1+ x) y board)))))    
+                   (t (possible-pos-aux (1+ x) y board)))))  
+    (print block-type)(print 'square-2x2)
     (cond ((and (eq block-type 'square-1x1) (empty-boardp board)) (list '(0 0) '(0 13) '(13 0) '(13 13)))
-          ((and (eq block-type 'square-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
+          ((and (equal block-type 'square-2x2) (empty-boardp board)) '((0 0) (0 12) (12 0) (12 12)))
           ((and (eq block-type 'cross) (empty-boardp board)) nil)
           (t (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))
     (remove-duplicates (apply #'append (possible-pos-aux 0 0 board)) :test #'equal-coords)))

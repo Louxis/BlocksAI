@@ -19,7 +19,8 @@
   (setq *close* nil)
   (print "NODE")
   (loop while (not (null *open*)) do
-        (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'bfs d)))          
+        (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'bfs d)))  
+          (print (car *open*))
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open
@@ -27,7 +28,7 @@
           ;Add expanded nodes to open
           (setq *open* (open-bfs *open* expandedNodes))
           ;Check if a node is a possible solution and return it
-          (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (return nodeit))) expandedNodes))))
+          (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (progn (print "solution found") (return (car nodeit))))) expandedNodes))))
 
 ;;;BF Search Recursive
 (defun bfs-rec (node solution expand operatores)
