@@ -15,11 +15,11 @@
 	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
 	(0 0 0 0 2 2 0 2 2 2 0 2 2 2)
 	(0 0 0 2 0 0 2 0 2 0 2 0 2 0)
-	(0 0 0 0 0 2 2 2 0 2 2 2 0 2)
-	(0 0 0 0 2 0 2 0 2 0 2 0 2 0)
+	(0 0 0 0 0 0 2 2 0 2 2 2 0 2)
+	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
 	(0 0 0 0 0 0 0 2 2 2 0 2 2 2)
 	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
-	(0 0 0 0 0 2 2 2 0 2 2 2 0 2)
+	(0 0 0 0 0 0 2 2 0 2 2 2 0 2)
 	(0 0 0 0 2 0 2 0 2 0 2 0 2 0)
 	(0 0 0 2 1 2 0 2 2 2 0 2 2 2)
 	(0 0 2 1 2 1 2 0 2 0 2 0 2 0)
@@ -49,7 +49,7 @@
 
 (defun board-print (board)
   (cond ((eq (length board) 1) (format t "~d~%~%" (car board)))
-        (t (format t "~d~%" (car board)) (print-board (cdr board)))))
+        (t (format t "~d~%" (car board)) (board-print (cdr board)))))
 
 (defun replace-position (index board-list &optional (value 1))
   (cond ((or(null board-list) (not (numberp index))) nil)
@@ -91,6 +91,9 @@
 
 (defun test-node-complete ()
   (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+
+(defun test-node-empty ()
+  (list (list (empty-board)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun node-print (node)
   (board-print (node-board (node-state node)))
