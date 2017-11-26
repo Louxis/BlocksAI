@@ -10,6 +10,24 @@
 	(make-list board-size :initial-element (make-list board-size :initial-element '0))
 )
 
+(defun test-board ()
+	'(
+	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
+	(0 0 0 0 2 2 0 2 2 2 0 2 2 2)
+	(0 0 0 2 0 0 2 0 2 0 2 0 2 0)
+	(0 0 0 0 0 0 2 2 0 2 2 2 0 2)
+	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
+	(0 0 0 0 0 0 0 2 2 2 0 2 2 2)
+	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
+	(0 0 0 0 0 0 2 2 0 2 2 2 0 2)
+	(0 0 0 0 2 0 2 0 2 0 2 0 2 0)
+	(0 0 0 2 1 2 0 2 2 2 0 2 2 2)
+	(0 0 2 1 2 1 2 0 2 0 2 0 2 0)
+	(1 2 2 2 1 2 2 2 0 2 2 2 0 0)
+	(0 1 2 1 0 0 2 0 2 0 2 0 2 2)
+	(1 0 1 2 1 2 0 2 0 2 0 0 2 2)
+	))
+
 (defun test-board-a ()
 	'(
 	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
@@ -88,7 +106,10 @@
 ;;;Node 
 
 (defun test-node ()
-  (list (list (test-board-a)'(4 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+
+(defun test-node-a ()
+  (list (list (test-board-a)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun test-node-complete ()
   (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
@@ -99,7 +120,7 @@
 (defun node-print (node)
   (cond ((null node) nil)
         (t (board-print (node-board (node-state node))) 
-           (format t "~%State: ~d~%Depth:~d~%" (node-pieces (node-state node)) (node-depth node)))))
+           (format t "~%Pieces: ~d~%Depth:~d~%Cost:~d~%F=~d~%H=~d~%" (node-pieces (node-state node)) (node-depth node) (node-cost node) (node-f node) (node-h node)))))
 
 (defun node-create (state parent d g h f)
   (list state parent d g h f))
@@ -179,25 +200,21 @@
         ((null (node-expandp node)) t)
         (t nil)))
 
-(defun expand (node operators search &optional (d 0))
-  (flet ((expand-node (node operation)
-           (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
-             (mapcar #'(lambda (position) 
-                         (let ((state (funcall operation (first position) (second position) node)))                           
-                           (if (not (null state)) (node-create state node (1+ (node-depth node)) 0 0 0))))
-                     positions))))
-    (mapcar #'(lambda(operation) (expand-node node operation)) operators)))
-
-(defun node-expand (node operators search &optional (d 0))
+(defun node-expand (node operators search &optional (d 0) (g 0) (h 0) (f 0))
   (labels ((place-nodes (node operation positions) 
              (cond ((null positions) nil)
+                   ;Check if there was any problem or if out of pieces
                    ((null (funcall operation (first (car positions)) (second (car positions)) node))
                     (place-nodes node operation (cdr positions)))
-                   (t (cons (node-create (funcall operation (first (car positions)) (second (car positions)) node)
-                                         node 99 0 0 0) (place-nodes node operation (cdr positions)))))))             
+                   (t (cons (node-create 
+                             (funcall operation (first (car positions)) (second (car positions)) node)
+                             node (1+ (node-depth node)) 
+                             (+ (node-cost node) g) 
+                             (+ (node-h node) h)
+                             f) 
+                            (place-nodes node operation (cdr positions)))))))             
     (flet ((expand-node (node operation)             
-             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))
-             ))
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
 
 (defun node-expandp (node)           
@@ -213,7 +230,6 @@
 
 ;;;End Expand
 
-
 ;;;Expand aux
 (defun verify-empty-cells (board positions)
   (mapcar #' (lambda (board-cell) (empty-cellp (first board-cell) (second board-cell) board)) positions))
@@ -228,7 +244,6 @@
         ((eq block-type 'square-2x2) (list (list x y) (list x (+ y 1))(list (+ 1 x) y) (list (+ x 1) (+ y 1))))
         ((eq block-type 'cross) (list (list x (+ y 1)) (list (+ x 1) (+ y 1)) (list (+ x 2) (+ y 1))(list (+ x 1) y) (list (+ x 1)(+ y 2))))
         (t nil)))
-
 
 (defun cell-inbounds (x y board)
   (cond ((and (and (>= y 0) (<= y (1- (length (line 0 board))))) (and (>= x 0) (<= x (1- (length (column 0 board)))))) t)
@@ -290,13 +305,6 @@
 
 (defun equal-coords (coorda coordb)
   (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))
-
-(defun invert-append (nodes)
-  (labels ((invert-nodes (nodes)
-             (labels ((invert-node (node) (list (second node) (first node))))
-               (cond ((null nodes) nil)
-                     (t (cons (invert-node (car nodes)) (invert-nodes (cdr nodes))))))))
-    (append nodes (invert-nodes nodes))))
 
 ;;Checks if there is any "1" piece on the board
 (defun empty-boardp (board)

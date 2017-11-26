@@ -14,6 +14,7 @@
   (append child open))
 
 ;;;BF Search Iterative
+;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
 (defun bfs-it (node solution expand operators &optional (d nil))
   (setq *open* (list node))
   (setq *close* nil)
