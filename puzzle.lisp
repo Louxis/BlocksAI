@@ -39,16 +39,17 @@
 	(0 2 2 0 2 0 2 0 2 0 2 0 2 0)
 	(0 2 2 0 0 2 2 2 0 2 2 2 0 2)
 	(0 1 1 0 2 0 2 0 2 0 2 0 2 0)
-	(0 1 1 2 2 2 0 2 2 2 0 2 2 2)
+	(0 1 1 2 2 2 2 2 2 2 0 2 2 2)
 	(0 1 2 1 2 1 2 0 2 0 2 0 2 0)
 	(1 2 2 2 1 2 2 2 0 2 2 2 0 0)
-	(0 1 2 1 0 0 2 0 2 0 2 0 2 2)
+	(0 1 2 1 0 2 2 0 2 0 2 0 2 2)
 	(1 0 1 2 1 2 0 2 0 2 0 0 2 2)
 	))
 
 
 (defun board-print (board)
-  (cond ((eq (length board) 1) (format t "~d~%~%" (car board)))
+  (cond ((null board) nil)
+        ((eq (length board) 1) (format t "~d~%~%" (car board)))
         (t (format t "~d~%" (car board)) (board-print (cdr board)))))
 
 (defun replace-position (index board-list &optional (value 1))
@@ -87,7 +88,7 @@
 ;;;Node 
 
 (defun test-node ()
-  (list (list (test-board-a)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-a)'(4 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun test-node-complete ()
   (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
@@ -96,8 +97,9 @@
   (list (list (empty-board)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun node-print (node)
-  (board-print (node-board (node-state node)))
-  (format t "~%State: ~d~%Depth:~d~%" (node-pieces (node-state node)) (node-depth node)))
+  (cond ((null node) nil)
+        (t (board-print (node-board (node-state node))) 
+           (format t "~%State: ~d~%Depth:~d~%" (node-pieces (node-state node)) (node-depth node)))))
 
 (defun node-create (state parent d g h f)
   (list state parent d g h f))
@@ -174,7 +176,7 @@
 
 (defun solution-nodep (node) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
-        ((not (not (member nil (expand node (operators) nil)))) t)
+        ((null (node-expandp node)) t)
         (t nil)))
 
 (defun expand (node operators search &optional (d 0))
@@ -187,16 +189,27 @@
     (mapcar #'(lambda(operation) (expand-node node operation)) operators)))
 
 (defun node-expand (node operators search &optional (d 0))
-  (labels ((place-nodes (node operation positions)             
-               (cond ((null positions) nil)
-                       ((null (funcall operation (first (car positions)) (second (car positions)) node))
-                        (place-nodes node operation (cdr positions)))
-                       (t (cons (node-create (funcall operation (first (car positions)) (second (car positions)) node)
-                                             node 99 0 0 0) (place-nodes node operation (cdr positions)))))))             
-    (flet ((expand-node (node operation)
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   (t (cons (node-create (funcall operation (first (car positions)) (second (car positions)) node)
+                                         node 99 0 0 0) (place-nodes node operation (cdr positions)))))))             
+    (flet ((expand-node (node operation)             
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))
              ))
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
+
+(defun node-expandp (node)           
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   (t '(t)))))             
+    (flet ((expand-node (node operation)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))
+             ))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) '(square-1x1 square-2x2 cross))))))
 
 ;;;End Expand
 
