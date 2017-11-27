@@ -52,11 +52,11 @@
 
 
 ;;;DF Search
-(defun dfs (node solution expand operators p)
+(defun dfs-it (node solution expand operators p)
    (setq *open* (list node))
    (setq *close* nil)
   (loop while (not (null *open*)) do
-        (let ((currentNode (car *open*)) (expandedNodes (funcall expand (car *open*) operators 'dfs p)))
+        (let ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators 'dfs p) *open* *close*)))
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open
