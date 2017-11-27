@@ -119,6 +119,24 @@
 	))
 
 
+(defun test-board-f ()
+	'(
+        (0 0 0 0 0 0 0 0 0 0 0 0 2 2)
+	(0 0 0 0 0 0 0 0 0 0 0 0 2 2)
+	(0 0 0 0 0 0 0 0 0 0 2 2 0 0)
+	(0 0 0 0 0 0 0 0 0 0 2 2 0 0)
+	(0 0 0 0 2 2 0 0 2 2 0 0 0 0)
+	(0 0 0 0 2 2 0 0 2 2 0 0 0 0)
+	(0 0 0 0 0 0 2 2 0 0 0 0 0 0)
+	(0 0 0 0 0 0 2 2 0 0 0 0 0 0)
+	(0 0 0 0 2 2 0 0 2 2 0 0 0 0)
+	(0 0 0 0 2 2 0 0 2 2 0 0 0 0)
+	(0 0 2 2 0 0 0 0 0 0 0 0 0 0)
+	(0 0 2 2 0 0 0 0 0 0 0 0 0 0)
+	(2 2 0 0 0 0 0 0 0 0 0 0 0 0)
+	(2 2 0 0 0 0 0 0 0 0 0 0 0 0)
+	))
+
 (defun test-board-complete ()
 	'(
 	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
@@ -193,9 +211,11 @@
 (defun test-node-d ()
   (list (list (test-board-d)'(0 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
-
 (defun test-node-e ()
   (list (list (test-board-e)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+
+(defun test-node-f ()
+  (list (list (test-board-f)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun test-node-complete ()
   (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
@@ -284,8 +304,9 @@
 (defun solution-nodep (node) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
         ((null (node-expandp node)) t)
+        ;((not (not (member nil (expand node (operators) nil)))) t)
         (t nil)))
-
+;legacy
 (defun expand (node operators search &optional (d 0))
   (flet ((expand-node (node operation)
            (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
