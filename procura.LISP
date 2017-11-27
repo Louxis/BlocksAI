@@ -13,13 +13,25 @@
 (defun open-dfs (open child)
   (append child open))
 
+
+(defun equal-node (node1 node2)
+  (equal (node-board (node-state node1)) (node-board (node-state node2))))
+
+(defun node-existsp (node list)
+  (if (member node list :test 'equal-node) t nil))
+
+(defun filter-nodes (node-list open-list close-list)
+  (cond ((null node-list) nil)
+        ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
+        (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
+
 ;;;BF Search Iterative
 ;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
 (defun bfs-it (node solution expand operators &optional (d nil))
   (setq *open* (list node))
   (setq *close* nil)
   (loop while (not (null *open*)) do
-        (let* ((currentNode (car *open*)) (expandedNodes (funcall expand currentNode operators 'bfs d)))  
+        (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators 'bfs d) *open* *close*)))  
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open
