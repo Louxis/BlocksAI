@@ -260,7 +260,7 @@
 ;;;Operations
 
 (defun operators ()
-  '(SQUARE-1X1 SQUARE-2X2 CROSS))
+  '(CROSS SQUARE-2X2 SQUARE-1X1))
 
 (defun place-square (x y board)
   (cond ((verify-empty-cells board (block-occupied-cells x y 'square-1x1))  
@@ -463,4 +463,14 @@
                                            (cond ((= position 0) 1) 
                                                  ((= position 1) -1) 
                                                  (t 0))) line)) board))))
+
+(defun ordered-insert (list ele)
+  (cond ((null list) (list ele))
+        ((> (node-h (car list)) (node-h ele)) (cons ele list))
+        ((= (node-h (car list)) (node-h ele)) (if (> (node-depth(car list)) (node-depth ele)) (cons ele list) (cons (car list) (ordered-insert (cdr list) ele))))
+        (t (cons (car list) (ordered-insert (cdr list) ele)))))
+
+(defun ordered-insert-list (list elelist)
+  (cond ((= (length elelist) 1) (ordered-insert list (car elelist)))
+        (t (ordered-insert (ordered-insert-list list (cdr elelist)) (car elelist)))))
 ;;;End expand aux

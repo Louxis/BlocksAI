@@ -25,6 +25,8 @@
         ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
         (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
 
+(defun filter-close-nodes (node-list close-list))
+
 ;;;BF Search Iterative
 ;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
 (defun bfs-it (node solution expand operators &optional (d nil))
@@ -57,7 +59,7 @@
           (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (return nodeit))) expandedNodes))))
 
 ;;;A* search iterative
-;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
+;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares))
 (defun a-star (node solution expand operators heuristic)
   (setq *open* (list node))
   (setq *close* nil)
@@ -70,11 +72,4 @@
           (setq *open* (ordered-insert-list (cdr *open*) expandedNodes))
 )))
 
-(defun ordered-insert (list ele)
-  (cond ((null list) (list ele))
-        ((> (node-h (car list)) (node-h ele)) (cons ele list))
-        (t (cons (car list) (ordered-insert (cdr list) ele)))))
 
-(defun ordered-insert-list (list elelist)
-  (cond ((= (length elelist) 1) (ordered-insert list (car elelist)))
-        (t (ordered-insert (ordered-insert-list list (cdr elelist)) (car elelist)))))
