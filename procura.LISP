@@ -46,7 +46,7 @@
    (setq *open* (list node))
    (setq *close* nil)
   (loop while (not (null *open*)) do
-        (let ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators 'dfs p) *open* *close*)))
+        (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators 'dfs p) *open* *close*)))
           ;Add currentNode to closed list
           (setq *close* (append *close* (list currentNode)))
           ;Remove current node from open
@@ -55,3 +55,26 @@
           (setq *open* (open-dfs *open* expandedNodes))
           ;Check if a node is a possible solution and return it
           (mapcar #'(lambda (nodeit) (if (funcall solution nodeit) (return nodeit))) expandedNodes))))
+
+;;;A* search iterative
+;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
+(defun a-star (node solution expand operators heuristic)
+  (setq *open* (list node))
+  (setq *close* nil)
+  (loop while (not (null *open*)) do
+        (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators heuristic) *open* *close*)))  
+          ;Add currentNode to closed list
+          (setq *close* (append *close* (list currentNode)))
+          (if (funcall solution currentNode) (return currentNode))
+          ;Add ordered expanded nodes to open
+          (setq *open* (ordered-insert-list (cdr *open*) expandedNodes))
+)))
+
+(defun ordered-insert (list ele)
+  (cond ((null list) (list ele))
+        ((> (node-h (car list)) (node-h ele)) (cons ele list))
+        (t (cons (car list) (ordered-insert (cdr list) ele)))))
+
+(defun ordered-insert-list (list elelist)
+  (cond ((= (length elelist) 1) (ordered-insert list (car elelist)))
+        (t (ordered-insert (ordered-insert-list list (cdr elelist)) (car elelist)))))

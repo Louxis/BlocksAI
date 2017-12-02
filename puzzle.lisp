@@ -200,28 +200,28 @@
   (list (list (test-board)'(4 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
 
 (defun test-node-a ()
-  (list (list (test-board-a)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-a)'(1 10 15)) nil 0 0 0 0 ))
 
 (defun test-node-b ()
-  (list (list (test-board-b)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-b)'(1 10 15)) nil 0 0 0 0))
 
 (defun test-node-c ()
-  (list (list (test-board-c)'(1 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-c)'(1 10 15)) nil 0 0 0 0))
 
 (defun test-node-d ()
-  (list (list (test-board-d)'(0 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-d)'(0 10 15)) nil 0 0 0 0))
 
 (defun test-node-e ()
-  (list (list (test-board-e)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-e)'(10 10 15)) nil 0 0 0 0))
 
 (defun test-node-f ()
-  (list (list (test-board-f)'(10 10 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-f)'(10 10 15)) nil 0 0 0 0))
 
 (defun test-node-complete ()
-  (list (list (test-board-complete)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (test-board-complete)'(0 9 15)) nil 0 0 0 0))
 
 (defun test-node-empty ()
-  (list (list (empty-board)'(0 9 15)) nil 0 (+ 10 (* 10 4) (* 15 5)) 1 2))
+  (list (list (empty-board)'(10 10 15)) nil 0 0 0 0))
 
 (defun node-print (node)
   (cond ((null node) nil)
@@ -316,7 +316,7 @@
                      positions))))
 (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators))))
 
-(defun node-expand (node operators search &optional (d 0) (g 0) (h 0) (f 0))
+(defun node-expand (node operators search &optional (d 0))
   (labels ((place-nodes (node operation positions) 
              (cond ((null positions) nil)
                    ;Check if there was any problem or if out of pieces
@@ -324,10 +324,24 @@
                     (place-nodes node operation (cdr positions)))
                    (t (cons (node-create 
                              (funcall operation (first (car positions)) (second (car positions)) node)
-                             node (1+ (node-depth node)) 
-                             (+ (node-cost node) g) 
-                             (+ (node-h node) h)
-                             f) 
+                             node (1+ (node-depth node)) 0 0 0)
+                            (place-nodes node operation (cdr positions)))))))             
+    (flet ((expand-node (node operation)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
+
+(defun create-node-from-state (state parent h) 
+             (let ((g (1+ (node-cost parent))) (h-v (funcall h (node-board state))))
+               (node-create state parent (1+ (node-depth parent)) g h-v (+ g h-v))))
+
+(defun node-expand-a (node operators h)
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ;Check if there was any problem or if out of pieces
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   (t (cons (create-node-from-state  
+                             (funcall operation (first (car positions)) (second (car positions)) node) node h)
                             (place-nodes node operation (cdr positions)))))))             
     (flet ((expand-node (node operation)             
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
@@ -427,10 +441,6 @@
 (defun equal-coords (coorda coordb)
   (and (= (car coorda) (car coordb)) (= (cadr coorda) (cadr coordb))))
 
-;maybe
-(defun mappend (function list)
- (apply #'append (mapcar #'function list)))
-
 ;;Checks if there is any "1" piece on the board
 (defun empty-boardp (board)
   (labels ((possible-pos-aux (x y board) 
@@ -439,4 +449,18 @@
                    ((eq (board-cell x y board) 1) nil )
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
+
+(defun to-fill-squares (board)
+  (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 0) 1 0)) line))board))))
+
+(defun filled-squares (board)
+  (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 1) 1 0)) line))board))))
+
+(defun heuristic-squares (board)
+  (apply '+ (apply #'append 
+                   (mapcar #'(lambda(line) 
+                               (mapcar #'(lambda(position) 
+                                           (cond ((= position 0) 1) 
+                                                 ((= position 1) -1) 
+                                                 (t 0))) line)) board))))
 ;;;End expand aux
