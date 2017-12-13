@@ -261,7 +261,7 @@
 
 (defun node-solution-size (node)
     (cond ((null (node-parent node)) 0)
-          (t (+ 1 (node-size (node-parent node))))))
+          (t (+ 1 (node-solution-size (node-parent node))))))
 
 (defun node-original (node)
     (cond ((null (node-parent node)) node)
