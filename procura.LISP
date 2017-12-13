@@ -25,10 +25,6 @@
         ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
         (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
 
-(defun filter-nodes-a (node-list open-list close-list))
-
-(defun filter-close-nodes (node-list close-list))
-
 (let ((results (list 0 -1 0 0)))
 ;;;BF Search Iterative
 ;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
@@ -84,15 +80,20 @@
 
 ;;;IDA* search iterative
 ;;;
-(defun ida-star (node solution expand operators heuristic)
+(defun ida-star (node solution expand operators heuristic cost &optional (bound (funcall cost node)))
+  (reset-results)
   (setq *open* (list node))
   (setq *close* nil)
+  (start-timer)
   (loop while (not (null *open*)) do
+        (if (> (funcall cost (car *open*)) bound) (return (ida-star node solution expand operators heuristic cost (funcall cost (car *open*)))))
         (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators heuristic) *open* *close*)))  
+          (add-explored 1)
+          (add-generate (length expandedNodes))
           (setq *close* (append *close* (list currentNode)))
-          (if (funcall solution currentNode) (return currentNode))
-          (setq *open* (ordered-insert-list (cdr *open*) expandedNodes))
-)))
+          (if (funcall solution currentNode) (progn (stop-timer)(print "hi")(return currentNode)))
+          (setq *open* (ordered-insert-list (cdr *open*) expandedNodes)))
+))
 
 ;;;Perfomance calculations
 
