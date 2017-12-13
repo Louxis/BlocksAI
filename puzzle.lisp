@@ -161,14 +161,6 @@
         ((eq (length board) 1) (format t "~d~%~%" (car board)))
         (t (format t "~d~%" (car board)) (board-print (cdr board)))))
 
-(defun node-size (node)
-    (cond ((null node-parent(node)) 0)
-          (t (+ 1 (node-size (node-parent node))))))
-
-(defun node-original (node)
-    (cond ((null node-parent(node)) node)
-          (t (node-size (node-parent node)))))
-
 (defun replace-position (index board-list &optional (value 1))
   (cond ((or(null board-list) (not (numberp index))) nil)
         ((or (< index 0) (> index (length board-list))) nil)
@@ -233,7 +225,10 @@
 
 (defun node-print (node)
   (cond ((null node) nil)
-        (t (board-print (node-board (node-state node))) 
+        (t (format t "Original:~%")
+           (board-print (node-board (node-state (node-original node)))) 
+           (format t "Final:~%")
+           (board-print (node-board (node-state node))) 
            (format t "~%Pieces: ~d~%Depth:~d~%Cost:~d~%F=~d~%H=~d~%" (node-pieces (node-state node)) (node-depth node) (node-cost node) (node-f node) (node-h node)))))
 
 (defun node-create (state parent d g h f)
@@ -262,6 +257,15 @@
 
 (defun node-f (node)
   (nth 5 node))
+
+
+(defun node-solution-size (node)
+    (cond ((null (node-parent node)) 0)
+          (t (+ 1 (node-size (node-parent node))))))
+
+(defun node-original (node)
+    (cond ((null (node-parent node)) node)
+          (t (node-original (node-parent node)))))
 
 ;;;End of node 
 
@@ -312,17 +316,7 @@
 (defun solution-nodep (node) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
         ((null (node-expandp node)) t)
-        ;((not (not (member nil (expand node (operators) nil)))) t)
         (t nil)))
-;legacy
-(defun expand (node operators search &optional (d 0))
-  (flet ((expand-node (node operation)
-           (let ((positions (possible-block-positions (node-board (node-state node)) operation)))
-             (mapcar #'(lambda (position) 
-                         (let ((state (funcall operation (first position) (second position) node)))                           
-                           (if (not (null state)) (node-create state node (1+ (node-depth node)) 0 0 0))))
-                     positions))))
-(apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators))))
 
 (defun node-expand (node operators search &optional (d 0))
   (labels ((place-nodes (node operation positions) 
@@ -330,6 +324,7 @@
                    ;Check if there was any problem or if out of pieces
                    ((null (funcall operation (first (car positions)) (second (car positions)) node))
                     (place-nodes node operation (cdr positions)))
+                   ((and (eq search 'dfs) (= (node-depth node) d)) nil)
                    (t (cons (node-create 
                              (funcall operation (first (car positions)) (second (car positions)) node)
                              node (1+ (node-depth node)) 0 0 0)
