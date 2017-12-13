@@ -161,6 +161,14 @@
         ((eq (length board) 1) (format t "~d~%~%" (car board)))
         (t (format t "~d~%" (car board)) (board-print (cdr board)))))
 
+(defun node-size (node)
+    (cond ((null node-parent(node)) 0)
+          (t (+ 1 (node-size (node-parent node))))))
+
+(defun node-original (node)
+    (cond ((null node-parent(node)) node)
+          (t (node-size (node-parent node)))))
+
 (defun replace-position (index board-list &optional (value 1))
   (cond ((or(null board-list) (not (numberp index))) nil)
         ((or (< index 0) (> index (length board-list))) nil)
