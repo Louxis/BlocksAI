@@ -68,14 +68,16 @@
 ;;;A* search iterative
 ;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares))
 (defun a-star (node solution expand operators heuristic)
+  (reset-results)
   (setq *open* (list node))
   (setq *close* nil)
+  (start-timer)
   (loop while (not (null *open*)) do
-        (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators heuristic) *open* *close*)))  
+        (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators heuristic) *open* *close*)))            
           (add-explored 1)
           (add-generate (length expandedNodes))
           (setq *close* (append *close* (list currentNode)))
-          (if (funcall solution currentNode) (progn (print results)(return currentNode)))
+          (if (funcall solution currentNode) (progn (stop-timer) (print results)(return currentNode)))
           (setq *open* (ordered-insert-list (cdr *open*) expandedNodes))
 )))
 
@@ -98,6 +100,12 @@
 (defun add-generate (value) (setf results (list (+ (nth 0 results) value) (nth 1 results) (nth 2 results) (nth 3 results))))
 
 (defun add-explored (value) (setf results (list (nth 0 results) (+ (nth 1 results) value) (nth 2 results) (nth 3 results))))
+
+(defun start-timer () (setf results (list (nth 0 results) (nth 1 results) (get-internal-real-time) (nth 3 results))))
+
+(defun stop-timer () (setf results (list (nth 0 results) (nth 1 results) (- (get-internal-real-time)(nth 2 results)) (nth 3 results))))
+
+(defun reset-results () (setf results (list 0 0 0 0)))
 
 (defun print-results ())
 (defun calculate-pen())
