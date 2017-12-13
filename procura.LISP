@@ -89,9 +89,8 @@
   (setq *close* nil)
   (loop while (not (null *open*)) do
         (let* ((currentNode (car *open*)) (expandedNodes (filter-nodes (funcall expand currentNode operators heuristic) *open* *close*)))  
-          (add-explored 1)
           (setq *close* (append *close* (list currentNode)))
-          (if (funcall solution currentNode) (progn (print results)(return currentNode)))
+          (if (funcall solution currentNode) (return currentNode))
           (setq *open* (ordered-insert-list (cdr *open*) expandedNodes))
 )))
 
@@ -107,8 +106,10 @@
 
 (defun reset-results () (setf results (list 0 0 0 0)))
 
-(defun print-results ())
 (defun calculate-pen())
+
+(defun print-results ())
+
 (defun calculate-average-ramification())
 
 )
