@@ -127,3 +127,84 @@
 )
 
 
+;;test
+(defun Newton-Raphson
+       (f
+        f-prime
+        x-left
+        x-right
+        &key
+        (accuracy (* 10.0 single-float-epsilon))
+        (maximum-number-of-iterations 20)
+        (prevent-bracket-jumping-p t))
+  "given
+   [1] f (required)
+       ==> a function with a single argument
+   [2] f-prime (required)
+       ==> another function with a single argument,
+           this one being the first derivative of f
+   [3] x-left (required)
+       ==> left-hand bracket for the desired root;
+           i.e., left-hand bracket <= desired root
+   [4] x-right (required)
+       ==> right-hand bracket for the desired root;
+           i.e., desired root <= right-hand bracket
+   [5] accuracy (keyword; (* 10.0 single-float-epsilon))
+       ==> desired relative accuracy for computed rood
+   [6] maximum-number-of-iterations (keyword; 20)
+       ==> maximum number of iterations
+   [7] prevent-bracket-jumping-p (keyword; t)
+       ==> if t, allows Newton-Raphson to continue
+           if it jumps out of the interval
+           [x-left, x-right];
+           if nil, jumping out of the interval
+           causes an error to be signaled
+returns
+   [1] a root of f in [x-left, x-right];
+       i.e., a value x in that interval
+       such that f(x) = 0
+   [2] the number of iterations required
+---
+Note: this function is based loosely on rtnewt,
+Section 9.4, Numerical Recipes, Second Edition"
+  (assert (< x-left x-right))
+  (let ((x (* 0.5 (+ x-left x-right)))
+        delta-x denom-for-accuracy-test)
+    (dotimes (j maximum-number-of-iterations
+                (if (not (cerror "returns solution so far"
+                                 "exceeding maximum number of iterations"))
+                  (values x)))
+      (setf delta-x (/ (funcall f x)  (funcall f-prime x)))
+      (setf denom-for-accuracy-test (+ (abs x)
+                                       (abs (decf x delta-x))))
+      (cond
+       (prevent-bracket-jumping-p
+        (if (< x x-left) (setf x x-left))
+        (if (> x x-right) (setf x x-right))
+        (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
+          (return (values x ))))
+       ((<= x-left x x-right)
+        (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
+          (return (values x ))))
+       (t
+        (error "jumped out of brackets")
+        )))))
+  
+(defun exp-2 (x) (- (exp x) 2.0))
+
+(defun base-ramification (b)
+  (labels ((build-expression(b l)
+             (cond ((= l 1) (format t "~d - 8" b))
+                   (t (format t "~d^~d +" b l) (build-expression b (1- l))))))
+    (build-expression b 5)))
+
+(defun derivative-ramification (b)
+  (labels ((build-expression(b l)
+             (cond ((= l 1) (format t "~d" 1))
+                   (t (format t "~d~d^~d +" l b (1- l)) (build-expression b (1- l))))))
+    (build-expression b 5)))
+             
+             
+  
+
+
