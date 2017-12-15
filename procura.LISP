@@ -25,7 +25,7 @@
         ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
         (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
 
-(let ((results (list 0 -1 0 0)))
+(let ((results (list 0 -1 0 nil)))
 ;;;BF Search Iterative
 ;;;Test: (node-print (bfs-it (test-node) 'solution-nodep 'node-expand (operators)))
 (defun bfs-it (node solution expand operators &optional (d nil))
@@ -64,7 +64,7 @@
 ;;;A* search iterative
 ;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares))
 (defun a-star (node solution expand operators heuristic)
-  (reset-results)
+  (start-performance)
   (setq *open* (list node))
   (setq *close* nil)
   (start-timer)
@@ -81,7 +81,7 @@
 ;;;IDA* search iterative
 ;;;(node-print (ida-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares 'node-f))
 (defun ida-star (node solution expand operators heuristic cost &optional (bound (funcall cost node)))
-  (reset-results)
+  (start-performance)
   (setq *open* (list node))
   (setq *close* nil)
   (start-timer)
@@ -91,11 +91,24 @@
         (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators heuristic) *open* *close*)))  
           (add-generate (length expanded-nodes))
           (setq *close* (append *close* (list current-node)))
-          (cond ((funcall solution current-node) (print-results current-node)(return current-node)))
+          (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
           (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes)))
 ))
 
 ;;;Perfomance calculations
+(defun start-performance ()
+  (setf results (list 0 0 0 nil))
+  (start-timer))
+
+(defun stop-performance (node)
+  (stop-timer)
+  (setf results (list (nth 0 results) (nth 1 results) (nth 2 results) node))
+  (print-results))  
+
+(defun get-generate () (nth 0 results))
+(defun get-explored () (nth 1 results))
+(defun get-timer () (nth 2 results))
+(defun get-node () (nth 3 results))
 
 (defun add-generate (value) (setf results (list (+ (nth 0 results) value) (nth 1 results) (nth 2 results) (nth 3 results))))
 
@@ -107,35 +120,35 @@
 (defun stop-timer () 
   (setf results (list (nth 0 results) (nth 1 results) (- (get-internal-real-time)(nth 2 results)) (nth 3 results))))
 
-(defun reset-results () 
-  (setf results (list 0 0 0 0)))
-
 (defun calculate-pen(node) 
   (/ (node-solution-size node) (nth 0 results)))
 
-(defun print-results (node)
-  (stop-timer)
-  (format t "Nós gerados:~d~%Nós explorados:~d~%Tempo de execução:~dms~%Penetrância:~d~%~%"
-          (nth 0 results)
-          (nth 1 results)
-          (nth 2 results)
-          (calculate-pen node)))
-
+(defun print-results ()
+  (format t 
+"Tamanho da solução: ~d~%
+Nós gerados: ~d~%
+Nós explorados: ~d~%
+Tempo de execução: ~dms~%
+Penetrância: ~d~%~%
+Ramificação média: ~s~%"
+          (node-solution-size (nth 3 results))
+          (get-generate)
+          (get-explored)
+          (get-timer)
+          (calculate-pen (get-node))
+          (Newton-Raphson #'base-ramification #'derivative-ramification 0.0 5.0)))
 
 (defun calculate-average-ramification())
 
-)
-
-
-;;test
+;;test (Newton-Raphson #'exp-2 #'exp 0.0 20.0)
 (defun Newton-Raphson
        (f
         f-prime
         x-left
         x-right
         &key
-        (accuracy (* 10.0 single-float-epsilon))
-        (maximum-number-of-iterations 20)
+        (accuracy 0.01)
+        (maximum-number-of-iterations 100)
         (prevent-bracket-jumping-p t))
   "given
    [1] f (required)
@@ -148,35 +161,18 @@
            i.e., left-hand bracket <= desired root
    [4] x-right (required)
        ==> right-hand bracket for the desired root;
-           i.e., desired root <= right-hand bracket
-   [5] accuracy (keyword; (* 10.0 single-float-epsilon))
-       ==> desired relative accuracy for computed rood
-   [6] maximum-number-of-iterations (keyword; 20)
-       ==> maximum number of iterations
-   [7] prevent-bracket-jumping-p (keyword; t)
-       ==> if t, allows Newton-Raphson to continue
-           if it jumps out of the interval
-           [x-left, x-right];
-           if nil, jumping out of the interval
-           causes an error to be signaled
-returns
-   [1] a root of f in [x-left, x-right];
-       i.e., a value x in that interval
-       such that f(x) = 0
-   [2] the number of iterations required
----
-Note: this function is based loosely on rtnewt,
-Section 9.4, Numerical Recipes, Second Edition"
-  (assert (< x-left x-right))
+           i.e., desired root <= right-hand bracket"
+  (assert (< x-left x-right))  
   (let ((x (* 0.5 (+ x-left x-right)))
-        delta-x denom-for-accuracy-test)
-    (dotimes (j maximum-number-of-iterations
+        delta-x denom-for-accuracy-test)      
+    (dotimes (j maximum-number-of-iterations                
                 (if (not (cerror "returns solution so far"
-                                 "exceeding maximum number of iterations"))
-                  (values x)))
+                                 "exceeding maximum number of iterations"))                    
+                    (values x)))
       (setf delta-x (/ (funcall f x)  (funcall f-prime x)))
       (setf denom-for-accuracy-test (+ (abs x)
-                                       (abs (decf x delta-x))))
+                                       (abs (decf x delta-x)))) 
+      
       (cond
        (prevent-bracket-jumping-p
         (if (< x x-left) (setf x x-left))
@@ -194,15 +190,23 @@ Section 9.4, Numerical Recipes, Second Edition"
 
 (defun base-ramification (b)
   (labels ((build-expression(b l)
-             (cond ((= l 1) (format t "~d - 8" b))
-                   (t (format t "~d^~d +" b l) (build-expression b (1- l))))))
-    (build-expression b 5)))
+             (cond ((= l 1) b)
+                   (t (+ (expt b l) (build-expression b (1- l)))))))
+    (- (build-expression b (node-solution-size (get-node))) (get-generate))))
 
 (defun derivative-ramification (b)
   (labels ((build-expression(b l)
-             (cond ((= l 1) (format t "~d" 1))
-                   (t (format t "~d~d^~d +" l b (1- l)) (build-expression b (1- l))))))
-    (build-expression b 5)))
+             (cond ((= l 1) 1)
+                   (t (+ (* l (expt b (1- l))) (build-expression b (1- l)))))))
+    (build-expression b (node-solution-size (get-node)))))
+
+)
+
+(defun base-ramification-test (b)
+  (labels ((build-expression(b l)
+             (cond ((= l 1) b)
+                   (t (+ (expt b l) (build-expression b (1- l)))))))
+    (- (build-expression b 25) (get-generate))))
              
              
   
