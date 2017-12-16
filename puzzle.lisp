@@ -154,15 +154,17 @@
 
 
 (defun board-print (board)
+  "Prints board in a easier way to read, in a grid with the board size"
   (cond ((null board) nil)
         ((eq (length board) 1) (format t "~d~%~%" (car board)))
         (t (format t "~d~%" (car board)) (board-print (cdr board)))))
 
-(defun replace-position (index board-list &optional (value 1))
-  (cond ((or(null board-list) (not (numberp index))) nil)
-        ((or (< index 0) (> index (length board-list))) nil)
-        ((= index 0) (cons value (cdr board-list)))
-        (t (cons (car board-list) (replace-position (- index 1) (cdr board-list) value)))))
+(defun replace-position (index board &optional (value 1))
+  "Replace a line in the index of a board"
+  (cond ((or(null board) (not (numberp index))) nil)
+        ((or (< index 0) (> index (length board))) nil)
+        ((= index 0) (cons value (cdr board)))
+        (t (cons (car board) (replace-position (- index 1) (cdr board) value)))))
 
 (defun replace-board (x y board &optional (value 1))
   (replace-position y board (replace-position x (line y board) value)))
@@ -183,10 +185,10 @@
         (t (nth x (line y board)))))
 
 (defun empty-cellp (x y board)
+  "Verifies if the x,y cell is empty (contains value 0)"
   (cond ((or (not (numberp x)) (not (numberp y))) nil)
         ((or (< x 0) (< y 0)) nil)
         ((not (eq (board-cell x y board) 0)) nil)
-        ;;((and (= (length (column 0 board)) x) (= (length (line 0 board)) y)) nil)
         (t t)))
 
 ;;;End of board 
@@ -221,6 +223,7 @@
   (list (list (empty-board)'(10 10 15)) nil 0 0 0 0))
 
 (defun node-print (node)
+  "Prints node board, pieces remaining, price, h falue and f value"
   (cond ((null node) nil)
         (t (format t "Original:~%")
            (board-print (node-board (node-state (node-original node)))) 
@@ -230,7 +233,6 @@
 
 (defun node-create (state parent d g h f)
   (list state parent d g h f))
-
 
 (defun node-state (node)
   (car node))
@@ -256,12 +258,13 @@
 (defun node-f (node)
   (nth 5 node))
 
-
 (defun node-solution-size (node)
+  "Calculates the total solution size of a node (without counting with the original root)"
     (cond ((null (node-parent node)) 0)
           (t (+ 1 (node-solution-size (node-parent node))))))
 
 (defun node-original (node)
+  "Gets the node original root"
     (cond ((null (node-parent node)) node)
           (t (node-original (node-parent node)))))
 
