@@ -1,10 +1,7 @@
-;;;;Puzzle file
-;;;;IA
-;;;;José Pereira e Lyudmyla Todoriko
-;;;;
+;;;;Puzzle logic
+;;;;Made by José Pereira and Lyudmyla Todoriko
 
 ;;;Board 
-
 (defun empty-board (&optional (board-size 14))
   "Retorna um tabuleiro 14x14 (default) com as casas vazias"
 	(make-list board-size :initial-element (make-list board-size :initial-element '0))
@@ -234,6 +231,7 @@
 (defun node-create (state parent d g h f)
   (list state parent d g h f))
 
+
 (defun node-state (node)
   (car node))
 
@@ -334,7 +332,7 @@
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
 
 (defun create-node-from-state (state parent h) 
-             (let ((g (1+ (node-cost parent))) (h-v (funcall h (node-board state))))
+             (let ((g (1+ (node-cost parent))) (h-v (funcall h state)))
                (node-create state parent (1+ (node-depth parent)) g h-v (+ g h-v))))
 
 (defun node-expand-a (node operators h)
@@ -350,7 +348,8 @@
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
 
-(defun node-expandp (node)           
+(defun node-expandp (node)     
+  "Faster way to confirm is a node can expand, verifying if there is no possible position to go to"
   (labels ((place-nodes (node operation positions) 
              (cond ((null positions) nil)
                    ((null (funcall operation (first (car positions)) (second (car positions)) node))
@@ -459,13 +458,25 @@
 (defun filled-squares (board)
   (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 1) 1 0)) line))board))))
 
-(defun heuristic-squares (board)
+(defun heuristic-squares (state)
   (apply '+ (apply #'append 
                    (mapcar #'(lambda(line) 
                                (mapcar #'(lambda(position) 
                                            (cond ((= position 0) 1) 
                                                  ((= position 1) -1) 
-                                                 (t 0))) line)) board))))
+                                                 (t 0))) line)) (node-board state)))))
+(defun heuristic-custom (state)    
+    (length (apply #'append (mapcar #'(lambda (operation) 
+                           (possible-block-positions (node-board state) operation)) (operators)))))
+
+(defun heuristic-custom-complex (state)
+  (flet ((count-squares-aux (board operation)
+           (cond ((eq operation 'square-1x1) (* (length (possible-block-positions board operation)) 1))
+                 ((eq operation 'square-2x2) (* (length (possible-block-positions board operation)) 2))
+                 ((eq operation 'cross) (* (length (possible-block-positions board operation)) 3))
+                 (t 0))))       
+    (apply #'+ (mapcar #'(lambda (operation) 
+                           (count-squares-aux (node-board state) operation)) (operators)))))
 
 (defun ordered-insert (list ele)
   (cond ((null list) (list ele))

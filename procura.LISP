@@ -26,6 +26,17 @@
         ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
         (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
 
+;;;Use with A*
+(defun filter-nodes-update-open (node-list open-list &optional (cost 'node-f))
+  "Verifies if any of the duplicate nodes are better than the current nodes"
+  (cond ((null node-list) open-list)
+        ((node-existsp (car node-list) open-list)
+         (let* ((new-node (car node-list)) (existing-node (car (member new-node open-list :test 'equal-node))))
+           (if (>= (funcall cost new-node) (funcall cost existing-node))
+               (filter-nodes-update-open (cdr node-list) open-list)
+             (filter-nodes-update-open (cdr node-list) (substitute new-node existing-node open-list :count 1 :test #'equal))))) 
+        (t (filter-nodes-update-open (cdr node-list) open-list))))
+
 ;;;Performance lexic
 (let ((results (list 0 -1 0 nil)))
 ;;;BF Search Iterative
@@ -72,8 +83,8 @@
                              (stop-performance expanded-node)(return expanded-node)))) expanded-nodes))))
 
 ;;;A* search iterative
-;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares))
-(defun a-star (node solution expand operators heuristic)
+;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares 'node-f))
+(defun a-star (node solution expand operators heuristic cost)
   "A* is an informed search algorithm, or a best-first search, meaning that it solves problems by searching among all possible paths
    to the solution (goal) for the one that incurs the smallest cost.
    Will use the given heuristic"
@@ -81,12 +92,18 @@
   (setq *open* (list node))
   (setq *close* nil)
   (loop while (not (null *open*)) do
-        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators heuristic) *open* *close*)))            
+        (let* ((current-node (car *open*)) 
+               (unfiltered-nodes (funcall expand current-node operators heuristic))
+               (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*)))            
           (add-explored 1)
           (add-generate (length expanded-nodes))
           (setq *close* (append *close* (list current-node)))
           (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+          ;(setq *open* (append (cdr *open*) expanded-nodes))       
           (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+          (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+          ;Failsafe
+          (stable-sort *open* #'< :key cost)
 )))
 
 
@@ -104,12 +121,17 @@
                    ;Node cost is bigger than the current bound, start a new search with a bigger bound
                    (if (> (funcall cost (car *open*)) bound) (return (ida-star node solution expand operators heuristic cost (funcall cost (car *open*)))))
                    ;Nodes cost is lesser than the current bound, keep searching with the current bound
-                   (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators heuristic) *open* *close*)))  
-                     (add-explored 1)
-                     (add-generate (length expanded-nodes))
-                     (setq *close* (append *close* (list current-node)))
-                     (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
-                     (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))))))
+                           (let* ((current-node (car *open*)) 
+                                  (unfiltered-nodes (funcall expand current-node operators heuristic))
+                                  (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+                             (add-explored 1)
+                             (add-generate (length expanded-nodes))
+                             (setq *close* (append *close* (list current-node)))
+                             (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+                             (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+                             (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+                             ;Failsafe
+                             (stable-sort *open* #'< :key cost)))))
     (start-performance)  
     ;auxiliar function to avoid restarting performance operations
     (ida-star-aux node solution expand operators heuristic cost bound)))
