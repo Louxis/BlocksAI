@@ -295,14 +295,285 @@ Para validar todos estes casos foi preciso uma longa lista de condições, garan
     (possible-pos-aux 0 0 board)))
 ```
 
+### 2.4 Expansão
 
-bfs
+Depois de termos a nossa estrutura de nós, tabuleiro e operadores a funcionar e a respeitar as regras propostas precisamos de preparar as funções que serão usadas na exploração do nosso problema pelos algoritmos de procura.
 
-|            | A   | B   |C    |D    |E  |F  |
-| ----------:|:---:|:---:|:---:|:---:|:-:|:-:|
-| Gerados    |6    |16   |47   |85   |N/A|N/A|
-| Explorados |1    |2    |9    |13   |N/A|N/A|
-| Penetrância|0.17 |0.13 |0.06 |0.04 |N/A|N/A|
-| Ramificação|6    |3.531|3.221|4.017|N/A|N/A|
-| Tempo(ms)  |2    |4    |18   |48   |N/A|N/A|
+```lisp
+(defun solution-nodep (node) 
+  "Verifies if a node is a solution node"
+  (cond ((equal (node-pieces node) '(0 0 0)) t)
+        ((null (node-expandp node)) t)
+        (t nil)))
 
+(defun node-expand (node operators search &optional (d 0))
+  "Expands a node based on given operators and search string, only used for bfs and dfs"
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ;Check if there was any problem or if out of pieces
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   ((and (eq search 'dfs) (= (node-depth node) d)) nil)
+                   (t (cons (node-create 
+                             (funcall operation (first (car positions)) (second (car positions)) node)
+                             node (1+ (node-depth node)) 0 0 0)
+                            (place-nodes node operation (cdr positions)))))))             
+    (flet ((expand-node (node operation)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
+
+(defun create-node-from-state (state parent h) 
+  "Used to create a node based on a specific state, used to shorten the code on node-expand-a"
+             (let ((g (1+ (node-cost parent))) (h-v (funcall h state)))
+               (node-create state parent (1+ (node-depth parent)) g h-v (+ g h-v))))
+
+(defun node-expand-a (node operators h)
+  "Expands a node based on given operators and heuristic, used by A* and IDA*"
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ;Check if there was any problem or if out of pieces
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   (t (cons (create-node-from-state  
+                             (funcall operation (first (car positions)) (second (car positions)) node) node h)
+                            (place-nodes node operation (cdr positions)))))))             
+    (flet ((expand-node (node operation)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
+
+(defun node-expandp (node)     
+  "Faster way to confirm is a node can expand, verifying if there is no possible position to go to"
+  (labels ((place-nodes (node operation positions) 
+             (cond ((null positions) nil)
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
+                    (place-nodes node operation (cdr positions)))
+                   (t '(t)))))             
+    (flet ((expand-node (node operation)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))
+             ))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) '(square-1x1 square-2x2 cross))))))
+```
+
+## 3. Procura
+
+Abstrato da lógica do problema proposto, foi também solicitado a implementação de diversos algoritmos de procura para conseguirem resolver os tabuleiros (mas mantendo-se abstratos) e o respetivo estudo dos resultados obtidos, tais como o tempo necessário para resolver o tabuleiro, nós gerados, nós explorados, penetrância e ramificação média
+
+
+### 3.1 Breadth-first search (BFS)
+
+O BFS, tal como o seu nome indica, procura numa árvore por largura, percorrendo todos os níveis até encontrar um nó que seja solução. Uma vez que não é um algoritmo de procura informado, não garante a solução ótima e como no pior dos casos pode explorar todos os nós existentes, este torna-se muito lento, pouco eficaz e pouco eficiente.
+
+Este foi implementado da seguinte forma (iterativa).
+
+```lisp
+(defun open-bfs (open child)
+  (append open child))
+
+(defun bfs-it (node solution expand operators &optional (d nil))
+  "Breadth-first search (BFS) is an algorithm for traversing or searching tree or graph data structures. 
+   It starts at the tree root and explores the neighbor nodes first, before moving to the next level neighbours."
+  (start-performance)
+  (setq *open* (list node))
+  (setq *close* nil)
+  (loop while (not (null *open*)) do
+        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators 'bfs d) *open* *close*)))  
+          (add-explored 1)
+          (add-generate (length expanded-nodes))
+          ;Add currentNode to closed list
+          (setq *close* (append *close* (list current-node)))
+          ;Remove current node from open
+          (setq *open* (cdr *open*))
+          ;Add expanded nodes to open
+          (setq *open* (open-bfs *open* expanded-nodes))
+          ;Check if a node is a possible solution and return it
+          (mapcar #'(lambda (expanded-node) (cond ((funcall solution expanded-node) (stop-performance expanded-node)(return expanded-node))))expanded-nodes))))
+```
+
+Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
+
+|                | A   | B   |C    |D    |E  |F  |
+| --------------:|:---:|:---:|:---:|:---:|:-:|:-:|
+| Nós Gerados    |6    |16   |47   |85   |N/A|N/A|
+| Nós Explorados |1    |2    |9    |13   |N/A|N/A|
+| Penetrância    |0.17 |0.13 |0.06 |0.04 |N/A|N/A|
+| Ramificação    |6    |3.531|3.221|4.017|N/A|N/A|
+| Tempo(ms)      |2    |4    |18   |48   |N/A|N/A|
+
+É necessário salientar que onde está assinalado "N/A" foram tabuleiros com mais jogadas possiveis, e uma vez que estamos a trabalhar numa versão gratuita de *LispWorks* estavamos a exceder a memória disponivel antes de encontrar uma solução consistente.
+
+Também é importante notar que ordem de colocação de peças na nossa implementação depende da ordem em que os operadores se encontram, pois ele irá tenter colocar os operados pela ordem fornecida ao logo de todos os nós explorados.
+
+As soluções obtidas foram, tal como esperadas, não ótimas dentro do que estavamos à procura e com uma penetrância e ramificação muito altas.
+
+### 3.2 Depth-first search (DFS)
+
+Ao contrário do algoritmo anterior, BFS, o DFS explora a árvore em profundidade, tentando sempre explorar o nó mais à esquerda possível até não ser possivel expandir mais ou chegar ao limite de profundida. No nosso caso de uso, dada uma profundidade grande o suficiente, mostrou ser mais rápido que o BFS e até consegue obter soluções, embora longe de ótimas, para todos os tabuleiros.
+
+Este foi implementado da seguinte forma (iterativa).
+
+```lisp
+
+(defun open-dfs (open child)
+  (append child open))
+
+(defun dfs-it (node solution expand operators p)
+  "Depth-first search (DFS) is an algorithm for traversing or searching tree or graph data structures.
+   One starts at the root and explores as far as possible along each branch before backtracking."
+  (start-performance)
+  (setq *open* (list node))
+  (setq *close* nil)
+  (loop while (not (null *open*)) do
+        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators 'dfs p) *open* *close*)))
+          (add-explored 1)
+          (add-generate (length expanded-nodes))
+          ;Add currentNode to closed list
+          (setq *close* (append *close* (list current-node)))
+          ;Remove current node from open
+          (setq *open* (cdr *open*))
+          ;Add expanded nodes to open
+          (setq *open* (open-dfs *open* expanded-nodes))
+          ;Check if a node is a possible solution and return it
+          (mapcar #'(lambda (expanded-node) 
+                      (cond ((funcall solution expanded-node) 
+                             (stop-performance expanded-node)(return expanded-node)))) expanded-nodes))))
+```
+
+Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
+
+|                | A   | B   |C    |D    |E    |F    |
+| --------------:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Nós Gerados    |6    |16   |30   |24   |83   |455  |
+| Nós Explorados |1    |2    |9    |3    |14   |26   |
+| Penetrância    |0.17 |0.13 |0.10 |0.13 |0.17 |0.06 |
+| Ramificação    |6    |3.531|2.712|2.485|1.218|1.824|
+| Tempo(ms)      |1    |6    |7    |13   |32   |258  |
+
+Neste caso já conseguimos encontrar soluções para todos os tabuleiros, dado uma profundidade que fosse grande o suficiente para explorar um ramo até ao fim, ou chegar ao ramo mais curto. Se a profundidade for reduzida entramos no problema do BFS e não é possivel encontrar uma solução através do *LispWorks* ou, se a profundidade for demasiado baixa, não é possivel encontrar uma solução de todo.
+
+Tal como no BFS a ordem em que as peças são colocadas, e podendo afetar o resultado obtivo, depende da ordem dos operadores.
+
+As soluções obtidas foram, tal como esperadas, não ótimas dentro do que estavamos à procura mas um pouco melhor que no BFS que não conseguiu analisar todos os tabuleiros.
+
+### 3.3 Algoritmos de procura informados
+
+Os algoritmos de procura informados usam conhecimento representado por **heurísticas** que irão "guiar" a nossa procura para uma solução ótima (se esta for admissível) e um caminho mais eficiente que o obtido nas procuras anteriores.
+
+As heurísticas observadas foram duas heurísticas diferentes, com objetivos diferentes onde uma delas foi fornecida no projeto e a outra foi obtida por uma ideia obtida com os docentes.
+
+#### 3.3.1 Heurísticas
+
+#### Fornecida pelo professor
+
+A heurística fornecida originalmente utiliza a fórmula `h(x) = o(x) - c(x)`
+
+Onde temos
+
+- `o(x) = número de quadrados a preencher`
+
+- `c(x) = número de quadrados preenchidos`
+
+Sendo esta a fornecida, foi nos proposto a criação de uma heurística melhor que a mencionada. Depois de realizado um estudo sobre esta e ter sido discutido com os docentes, decidimos criar uma heurística com um objetivo diferente, uma vez que esta visava ocupar o máximo de espaço no tabuleiro possível.
+
+```lisp
+(defun heuristic-squares (state)
+  (apply '+ (apply #'append 
+                   (mapcar #'(lambda(line) 
+                               (mapcar #'(lambda(position) 
+                                           (cond ((= position 0) 1) 
+                                                 ((= position 1) -1) 
+                                                 (t 0))) line)) (node-board state)))))
+```
+
+#### A nossa alteração
+
+Em vez de tentarmos preencher o máximo número de quadrados, decidimos que o objetivo seria acabar o tabuleiro o mais rápido possível, ou seja, chegar a uma posição onde não nos é possível realizar mais nenhuma jogada, uma vez que uma das condições de nó solução é não ser possível colocar mais peças.
+
+Para isso usamos a fórmula `h(x) = 3a(x) + 2b(x) + c(x)`
+
+Onde temos
+
+- `a(x) = número de peças 1x1 que podemos colocar`
+
+- `b(x) = número de peças 2x2 que podemos colocar`
+
+- `c(x) = número de peças cruz que podemos colocar`
+
+- E os respetivos pesos a usar para cada uma, que podem ser alterados para melhorar/piorar a solução em casos especificos ou em futuras alterações sobre o tabuleiro e/ou peças.
+
+```lisp
+(defun heuristic-custom-complex (state &optional (sq1mod 3) (sq2mod 2) (crossmod 1))
+  "Heuristic used to benefid boards with less possible places"
+  (flet ((count-squares-aux (board operation)
+           (cond ((eq operation 'square-1x1) (* (length (possible-block-positions board operation)) sq1mod))
+                 ((eq operation 'square-2x2) (* (length (possible-block-positions board operation)) sq2mod))
+                 ((eq operation 'cross) (* (length (possible-block-positions board operation)) crossmod))
+                 (t 0))))       
+    (apply #'+ (mapcar #'(lambda (operation) 
+                           (count-squares-aux (node-board state) operation)) (operators)))))
+```
+
+Ao inicio ainda tentamos uma abordagem sem pesos, mas mostrou ser pouco eficaz para o nosso objetivo e não era muito mais rápida a nivel de calculos com o seguinte código:
+
+```lisp
+(defun heuristic-custom (state)    
+    (length (apply #'append (mapcar #'(lambda (operation) 
+                           (possible-block-positions (node-board state) operation)) (operators)))))
+```
+
+Para comprovar a eficácia desta heurística perante a fornecida pelos docentes, com o objetivo de ficar sem jogadas mais rápido possível, estudamos a profundidade das soluções obtidas que se traduz no comprimento da solução e número de jogadas realizadas pelo algoritmo.
+
+|Número de Jogadas   | A | B | C | D | E |F  |
+|-------------------:|:-:|:-:|:-:|:-:|:-:|:-:|
+|Heurística Fornecida|2  |4  |5  |6  |17 |25 |
+|Nova heurística     |1  |2  |3  |5  |12 |8  |
+
+Como podemos observar, a nossa heurística tem uma melhoria significativa, principalmente quando o tabuleiro tem vários caminhos possíveis. Estudos sobre a *performance* das heurísticas serão mostrados no próximo capitulo.
+
+#### 3.3.2 A-Star Search (A*)
+
+O A* é o nosso primeiro algoritmo de procura informada, ou seja usa conhecimento representado por uma **heurística** que irá "guiar" a nossa procura para uma solução ótima (se esta for admissível) e um caminho mais eficiente que o obtido nas procuras anteriores.
+
+Este foi implementado da seguinte forma (iterativa).
+
+```lisp
+
+(defun open-dfs (open child)
+  (append child open))
+
+(defun dfs-it (node solution expand operators p)
+  "Depth-first search (DFS) is an algorithm for traversing or searching tree or graph data structures.
+   One starts at the root and explores as far as possible along each branch before backtracking."
+  (start-performance)
+  (setq *open* (list node))
+  (setq *close* nil)
+  (loop while (not (null *open*)) do
+        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators 'dfs p) *open* *close*)))
+          (add-explored 1)
+          (add-generate (length expanded-nodes))
+          ;Add currentNode to closed list
+          (setq *close* (append *close* (list current-node)))
+          ;Remove current node from open
+          (setq *open* (cdr *open*))
+          ;Add expanded nodes to open
+          (setq *open* (open-dfs *open* expanded-nodes))
+          ;Check if a node is a possible solution and return it
+          (mapcar #'(lambda (expanded-node) 
+                      (cond ((funcall solution expanded-node) 
+                             (stop-performance expanded-node)(return expanded-node)))) expanded-nodes))))
+```
+
+Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
+
+|                | A   | B   |C    |D    |E    |F    |
+| --------------:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Nós Gerados    |6    |16   |30   |24   |83   |455  |
+| Nós Explorados |1    |2    |9    |3    |14   |26   |
+| Penetrância    |0.17 |0.13 |0.10 |0.13 |0.17 |0.06 |
+| Ramificação    |6    |3.531|2.712|2.485|1.218|1.824|
+| Tempo(ms)      |1    |6    |7    |13   |32   |258  |
+
+Neste caso já conseguimos encontrar soluções para todos os tabuleiros, dado uma profundidade que fosse grande o suficiente para explorar um ramo até ao fim, ou chegar ao ramo mais curto. Se a profundidade for reduzida entramos no problema do BFS e não é possivel encontrar uma solução através do *LispWorks* ou, se a profundidade for demasiado baixa, não é possivel encontrar uma solução de todo.
+
+Tal como no BFS a ordem em que as peças são colocadas, e podendo afetar o resultado obtivo, depende da ordem dos operadores.
+
+As soluções obtidas foram, tal como esperadas, não ótimas dentro do que estavamos à procura mas um pouco melhor que no BFS que não conseguiu analisar todos os tabuleiros.
