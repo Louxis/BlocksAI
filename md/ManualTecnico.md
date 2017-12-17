@@ -295,3 +295,14 @@ Para validar todos estes casos foi preciso uma longa lista de condições, garan
     (possible-pos-aux 0 0 board)))
 ```
 
+
+bfs
+
+|            | A   | B   |C    |D    |E  |F  |
+| ----------:|:---:|:---:|:---:|:---:|:-:|:-:|
+| Gerados    |6    |16   |47   |85   |N/A|N/A|
+| Explorados |1    |2    |9    |13   |N/A|N/A|
+| Penetrância|0.17 |0.13 |0.06 |0.04 |N/A|N/A|
+| Ramificação|6    |3.531|3.221|4.017|N/A|N/A|
+| Tempo(ms)  |2    |4    |18   |48   |N/A|N/A|
+
