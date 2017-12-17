@@ -273,26 +273,31 @@
 ;;;Operations
 
 (defun operators ()
+  "Possible operators to use on Blokus"
   '(CROSS SQUARE-2X2 SQUARE-1X1))
 
 (defun place-square (x y board)
+  "Places a 1x1 square on the given x and y of a board"
   (cond ((verify-empty-cells board (block-occupied-cells x y 'square-1x1))  
          (replace-board x y board))
         (t nil)))
 
 (defun update-pieces (pieces type)
+  "Subtracts one from the type of piece in the list, returning nil if it wasn't possible"
   (cond ((eq type 'square-1x1) (list (1- (first pieces)) (second pieces) (third pieces)))
         ((eq type 'square-2x2) (list (first pieces) (1- (second pieces)) (third pieces)))
         ((eq type 'cross) (list (first pieces) (second pieces) (1- (third pieces))))
         (t (print "SOMETHING WENT WRONG") nil)))
 
 (defun square-1x1 (x y node)
+  "Places a 1x1 square on the board if it is possible and updating the existing pieces on the node"
   (let ((pieces (node-pieces (node-state node))))
     (cond ((eq (first pieces) 0) nil)
           (t (list (place-square x y (node-board (node-state node))) 
                    (update-pieces pieces 'square-1x1))))))
 
 (defun square-2x2(x y node)
+  "Places a 2x2 square on the board if it is possible and updating the existing pieces on the node"
          (labels ((square-aux (x y board cells) 
                   (if (null cells) (place-square x y board) 
                     (square-aux (first (first cells)) (second (first cells)) (place-square x y board) (cdr cells)))))
@@ -302,6 +307,7 @@
                             (update-pieces pieces 'square-2x2)))))))
 
 (defun cross (x y node)
+  "Places a cross (+) on the board if it is possible and updating the existing pieces on the node"
          (labels ((cross-aux (x y board cells) 
                   (if (null cells) (place-square x y board) 
                     (cross-aux (first (first cells)) (second (first cells)) (place-square x y board) (cdr cells)))))
@@ -367,24 +373,29 @@
 
 ;;;Expand aux
 (defun verify-empty-cells (board positions)
+  "Verifies if all the given positions are empty"
   (mapcar #' (lambda (board-cell) (empty-cellp (first board-cell) (second board-cell) board)) positions))
 
-(defun empty-positions (board positions)  
+(defun empty-positions (board positions) 
+  "Returns the positions that are empty from the given position list"
   (apply #'append 
   (mapcar #' (lambda (board-cell &aux (empty (empty-cellp (first board-cell) (second board-cell) board)))               
                (if (and empty (cell-inbounds (first board-cell) (second board-cell) board)) (list board-cell))) positions)))
 
 (defun block-occupied-cells (x y block-type)
+  "Calculates the coordinates (x y) that will be occupied by a given block type on a give x and y"
   (cond ((eq block-type 'square-1x1) (list (list x y)))
         ((eq block-type 'square-2x2) (list (list x y) (list x (+ y 1))(list (+ 1 x) y) (list (+ x 1) (+ y 1))))
         ((eq block-type 'cross) (list (list x (+ y 1)) (list (+ x 1) (+ y 1)) (list (+ x 2) (+ y 1))(list (+ x 1) y) (list (+ x 1)(+ y 2))))
         (t nil)))
 
 (defun cell-inbounds (x y board)
+  "Verifies if a cell is in a valid board position (between 0 and maximum line length"
   (cond ((and (and (>= y 0) (<= y (1- (length (line 0 board))))) (and (>= x 0) (<= x (1- (length (column 0 board)))))) t)
         (t nil)))
 
 (defun possible-diagonals (x y board block-type)
+  "Calculates all the possible diagonals from a specific block on a given x and y"
   (cond ((eq block-type 'square-1x1) (empty-positions board (list (list (1- x) (1- y)) (list (1- x) (1+ y)) 
                                                                   (list (1+ x) (1- y)) (list (1+ x) (1+ y)))))
         ((eq block-type 'square-2x2) (empty-positions board (list (list (- x 2) (- y 2)) (list (+ x 1) (- y 2)) 
@@ -395,6 +406,7 @@
                                                              (list (- x 2) (- y 3)))))))
 
 (defun not-adjacent-pos (x y board block-type)
+  "Verifices if there is any adjacent player piece on a given x and y"
   (cond ((and (eq block-type 'square-1x1) 
               (not (eq (board-cell x (1- y) board) 1)) 
               (not (eq (board-cell x (1+ y) board) 1)) 
@@ -424,10 +436,12 @@
                   (length (block-occupied-cells x y block-type)))) t)))
 
 (defun valid-diagonals (diagonal-positions board block-type)
+  "Returns the valid diagonals"
   (apply #'append(mapcar #'(lambda (position) (cond ((not-adjacent-pos (first position) (second position) board block-type) (list position)))) diagonal-positions)))
 
 
 (defun possible-block-positions (board block-type)
+  "Returns all the possible position to place a block type on the board, following the game rules"
   (labels ((possible-pos-aux (x y board) 
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) nil)
@@ -448,6 +462,7 @@
 
 ;;Checks if there is any "1" piece on the board
 (defun empty-boardp (board)
+  "Verifies that the board is empty"
   (labels ((possible-pos-aux (x y board) 
              (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
                    ((= y 14) t)                   
@@ -455,6 +470,7 @@
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
 
+;;;heuristic
 (defun to-fill-squares (board)
   (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 0) 1 0)) line))board))))
 
@@ -480,7 +496,7 @@
                  (t 0))))       
     (apply #'+ (mapcar #'(lambda (operation) 
                            (count-squares-aux (node-board state) operation)) (operators)))))
-
+;;;end heuristic
 (defun ordered-insert (list ele)
   (cond ((null list) (list ele))
         ((> (node-h (car list)) (node-h ele)) (cons ele list))
