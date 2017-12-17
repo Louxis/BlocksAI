@@ -6,6 +6,12 @@
                      :if-does-not-exist :create)
     (format f message)))
 
+(defun write-test ()
+(with-open-file (str "D:\3_Ano\IA\BlocksAI\help.txt"
+                     :direction :output
+                     :if-exists :overwrite
+                     :if-does-not-exist :create)
+  (format str "write anything ~%")))
 
 (defun read-file (filename)
   (with-open-file (stream filename)
@@ -34,22 +40,24 @@
   (read))
 
 (defun bfs-io-aux(board)
- (bfs-it (node-create (list board (list 
+  (let ((bfs-solution (bfs-it (node-create (list board (list 
                                                (- 10 (block-count board 'square-1x1)) 
                                                (- 10 (block-count board 'square-2x2)) 
                                                (- 15 (block-count board 'cross)))) 
                                   nil 0 0 0 0 ) 
-                     'solution-nodep 'node-expand (operators)))
+                     'solution-nodep 'node-expand (operators))))
 
-(defun insert-record-file (solution)
+     (write-file (insert-record-file) (node-print bfs-solution))
+))
+
+(defun insert-record-file ()
     (format t "Please insert the filepath where you want to save the results")
-     (write-file (read) solution) 
+     (read) 
 )
 
 (defun choose-algorithm ()
   (let ((board (start)) (algorithm (algorithm-number)))
-    (cond ((= algorithm 1) (node-print(bfs-io-aux board)) 
-           (insert-record-file (format "%S" (bfs-io-aux board))) (choose-algorithm)) ;;BFS
+    (cond ((= algorithm 1) (bfs-io-aux board) (choose-algorithm)) ;;BFS
           (t nil)
           )
     ))
