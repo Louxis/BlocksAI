@@ -369,6 +369,11 @@ Este foi implementado da seguinte forma (iterativa).
 (defun open-bfs (open child)
   (append open child))
 
+(defun filter-nodes (node-list open-list close-list)
+  (cond ((null node-list) nil)
+        ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
+        (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
+
 (defun bfs-it (node solution expand operators &optional (d nil))
   "Breadth-first search (BFS) is an algorithm for traversing or searching tree or graph data structures. 
    It starts at the tree root and explores the neighbor nodes first, before moving to the next level neighbours."
@@ -412,7 +417,6 @@ Ao contrário do algoritmo anterior, BFS, o DFS explora a árvore em profundidad
 Este foi implementado da seguinte forma (iterativa).
 
 ```lisp
-
 (defun open-dfs (open child)
   (append child open))
 
@@ -531,49 +535,80 @@ Como podemos observar, a nossa heurística tem uma melhoria significativa, princ
 
 #### 3.3.2 A-Star Search (A*)
 
-O A* é o nosso primeiro algoritmo de procura informada, ou seja usa conhecimento representado por uma **heurística** que irá "guiar" a nossa procura para uma solução ótima (se esta for admissível) e um caminho mais eficiente que o obtido nas procuras anteriores.
+O A* é o nosso primeiro algoritmo de procura informada, este irá explorar a árvore através do menor custo F de um nó, obtido por `f(x) = g(x) + h(x)`, percorrendo ordenadamente, do menor para o maior, a lista de nós explorados e apenas devolvendo um nó como solução quando este for o nó aberto de menor custo na árvore. Assim garante que se for admissível, a solução encontrada é ótima.
 
 Este foi implementado da seguinte forma (iterativa).
 
 ```lisp
 
-(defun open-dfs (open child)
-  (append child open))
+(defun filter-nodes-update-open (node-list open-list &optional (cost 'node-f))
+  "Verifies if any of the duplicate nodes are better than the current nodes"
+  (cond ((null node-list) open-list)
+        ((node-existsp (car node-list) open-list)
+         (let* ((new-node (car node-list)) (existing-node (car (member new-node open-list :test 'equal-node))))
+           (if (>= (funcall cost new-node) (funcall cost existing-node))
+               (filter-nodes-update-open (cdr node-list) open-list)
+             (filter-nodes-update-open (cdr node-list) (substitute new-node existing-node open-list :count 1 :test #'equal))))) 
+        (t (filter-nodes-update-open (cdr node-list) open-list))))
 
-(defun dfs-it (node solution expand operators p)
-  "Depth-first search (DFS) is an algorithm for traversing or searching tree or graph data structures.
-   One starts at the root and explores as far as possible along each branch before backtracking."
-  (start-performance)
-  (setq *open* (list node))
-  (setq *close* nil)
-  (loop while (not (null *open*)) do
-        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators 'dfs p) *open* *close*)))
-          (add-explored 1)
-          (add-generate (length expanded-nodes))
-          ;Add currentNode to closed list
-          (setq *close* (append *close* (list current-node)))
-          ;Remove current node from open
-          (setq *open* (cdr *open*))
-          ;Add expanded nodes to open
-          (setq *open* (open-dfs *open* expanded-nodes))
-          ;Check if a node is a possible solution and return it
-          (mapcar #'(lambda (expanded-node) 
-                      (cond ((funcall solution expanded-node) 
-                             (stop-performance expanded-node)(return expanded-node)))) expanded-nodes))))
+(defun ida-star (node solution expand operators heuristic cost &optional (bound (funcall cost node)))  
+  "Iterative-deepening-A* works as follows: at each iteration, perform a depth-first search,
+   cutting off a branch when its total cost f(n)=g(n)+h(n) exceeds a given threshold.
+   This threshold starts at the estimate of the cost at the initial state, and increases for each iteration of the algorithm.
+   At each iteration, the threshold used for the next iteration is the minimum cost of all values that exceeded the current threshold."
+  (labels ((ida-star-aux (node solution expand operators heuristic cost &optional (bound (funcall cost node)))
+             (setq *open* (list node))
+             (setq *close* nil)
+             (loop while (not (null *open*)) do       
+                   ;Node cost is bigger than the current bound, start a new search with a bigger bound
+                   (if (> (funcall cost (car *open*)) bound) (return (ida-star node solution expand operators heuristic cost (funcall cost (car *open*)))))
+                   ;Nodes cost is lesser than the current bound, keep searching with the current bound
+                           (let* ((current-node (car *open*)) 
+                                  (unfiltered-nodes (funcall expand current-node operators heuristic))
+                                  (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+                             (add-explored 1)
+                             (add-generate (length expanded-nodes))
+                             (setq *close* (append *close* (list current-node)))
+                             (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+                             (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+                             (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+                             ;Failsafe
+                             (stable-sort *open* #'< :key cost)))))
+    (start-performance)  
+    ;auxiliar function to avoid restarting performance operations
+    (ida-star-aux node solution expand operators heuristic cost bound)))
 ```
 
 Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
 
-|                | A   | B   |C    |D    |E    |F    |
-| --------------:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Nós Gerados    |6    |16   |30   |24   |83   |455  |
-| Nós Explorados |1    |2    |9    |3    |14   |26   |
-| Penetrância    |0.17 |0.13 |0.10 |0.13 |0.17 |0.06 |
-| Ramificação    |6    |3.531|2.712|2.485|1.218|1.824|
-| Tempo(ms)      |1    |6    |7    |13   |32   |258  |
+|Heurística Docente | A   | B   |C    |D    |E    |F    |
+| --------------:   |:---:|:---:|:---:|:---:|:---:|:---:|
+| Nós Gerados       |10   |27   |45   |46   |112  |346  |
+| Nós Explorados    |3    |5    |6    |7    |18   |26   |
+| Penetrância       |0.20 |0.15 |0.11 |0.13 |0.15 |0.07 |
+| Ramificação       |2.702|1.936|1.850|1.631|1.890|1.172|
+| Tempo(ms)         |2    |3    |7    |13   |16   |35   |
 
-Neste caso já conseguimos encontrar soluções para todos os tabuleiros, dado uma profundidade que fosse grande o suficiente para explorar um ramo até ao fim, ou chegar ao ramo mais curto. Se a profundidade for reduzida entramos no problema do BFS e não é possivel encontrar uma solução através do *LispWorks* ou, se a profundidade for demasiado baixa, não é possivel encontrar uma solução de todo.
+Comparativamente aos algoritmos anteriores, a diferença da solução obtida é muito elevada, e em média a penetrância também é superior no A*.
 
-Tal como no BFS a ordem em que as peças são colocadas, e podendo afetar o resultado obtivo, depende da ordem dos operadores.
+Vamos agora testar o mesmo algoritmo, mas com a nova heurística.
 
-As soluções obtidas foram, tal como esperadas, não ótimas dentro do que estavamos à procura mas um pouco melhor que no BFS que não conseguiu analisar todos os tabuleiros.
+|Heurística Original| A   | B   |C    |D    |E    |F    |
+| -----------------:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Nós Gerados       |6    |11   |20   |22   |125  |281  |
+| Nós Explorados    |2    |3    |5    |5    |47   |66   |
+| Penetrância       |0.17 |0.18 |0.15 |0.18 |0.10 |0.05 |
+| Ramificação       |6    |2.854|2.311|1.817|1.890|1.403|
+| Tempo(ms)         |3    |6    |9    |14   |80   |169  |
+
+A penetrância embora situacional, foi melhorada mas a ramificação aumentou juntamente com o tempo necessário para chegar a uma solução, no entanto, como demonstrado no capitulo anterior das heurísticas foi possível chegar a soluções com um número de jogadas muito inferior à heurística dos docentes, assim podemos afirmar que a heurística foi alterada e melhorada.
+
+Sobre o algoritmo, o tempo e soluções obtidas foram muito melhores que a dos algoritmos anteriores uma vez que a procura é informada, obtendo soluções ótimas.
+
+#### 3.3.3 Iterative Deepening A-Star Search (IDAA*)
+
+A procura do algoritmo A* consegue encontrar a solução ótima e num espaço tempo bastante satisfatório para o problema em questão e tendo em conta a heurística, no entanto existe outro problema que devemos considerar, a memória não é infinita.
+
+Para colmatar a memória limitada, podemos utilizar este algoritmo que não carrega toda a árvore de uma só vez, utilizando limites para saltar nós em favor de nós de menor custo. Em contra partida, como não carregamos toda a árvore de uma só vez, cada vez que formos aumentar o nosso limite, iremos gerar a árvore a partir da raiz, que irá aumentar o número de nós gerados, explorados e o tempo de execução.
+
+Este foi implementado da seguinte forma (iterativa).
