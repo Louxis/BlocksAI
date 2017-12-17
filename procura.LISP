@@ -1,6 +1,6 @@
 ;;;;Searching algorithms
 ;;;;Made by José Pereira and Lyudmyla Todoriko
-;;;;The node structure is {(board) (pieces remaining) (parent node) (g) (optional h and f)
+;;;;The node structure is {((board) (pieces remaining)) (parent node) (g) (optional h and f)
 
 ;;;Global variables
 (defparameter *open* nil)
@@ -235,8 +235,7 @@ Ramificação média: ~s~%"
         (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
           (return (values x ))))
        (t
-        (error "jumped out of brackets")
-        )))))  
+        (error "jumped out of brackets"))))))  
 
 ;;Base function to calculate ramification
 ;;We have b+b^1+b^2...+b^L = T and we can convert it into
