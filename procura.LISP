@@ -142,6 +142,7 @@
   (setf results (list 0 0 0 nil))
   (start-timer))
 
+
 (defun stop-performance (node)
   "Stops timer and prints the results with print-results function"
   (stop-timer)
@@ -183,7 +184,37 @@ Ramificação média: ~s~%"
           (get-explored)
           (get-timer)
           (calculate-pen (get-node))
+          (calculate-average-ramification))
+  (results-write-file "C:/Users/jcper/Desktop/ola.txt"))
+
+(defun board-write-file (board pathname &optional message)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out message))
+  (mapcar #'(lambda (line) (board-line-write line pathname)) board)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out "~%")))
+
+(defun results-write-file (pathname)
+    (with-open-file (out pathname :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (format out "Tamanho da solução: ~d~%
+Nós gerados: ~d~%
+Nós explorados: ~d~%
+Tempo de execução: ~dms~%
+Penetrância: ~d~%~%
+Ramificação média: ~s~%~%"
+          (node-solution-size (get-node))
+          (get-generate)
+          (get-explored)
+          (get-timer)
+          (calculate-pen (get-node))
           (calculate-average-ramification)))
+    (board-write-file (node-board (node-state (node-original (get-node)))) pathname "Inicio:~%")
+    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%"))
+
+(defun board-line-write (line pathname)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)    
+    (mapcar #'(lambda (cell) (format out "~d " cell)) line)
+    (format out "~%")))
 
 (defun calculate-average-ramification()
   "Used to calculate our average ramification base on Newton-Raphson and testing if a solution only contains one node"
