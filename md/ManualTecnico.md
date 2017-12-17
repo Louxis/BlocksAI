@@ -187,11 +187,11 @@ No entanto é preciso ter em contas algumas regras:
 
 1. As peças só podem ser colocadas diagonalmente entre si;
 
-1. As peças nunca podem ser colocadas imediatamente adjacente a outra peça do jogador (mas podem estar adjacentes a uma peça já existente);
+2. As peças nunca podem ser colocadas imediatamente adjacente a outra peça do jogador (mas podem estar adjacentes a uma peça já existente);
 
-1. Caso não exista mais nenhuma peça em campo do jogador, a peça apenas pode ser colocada num dos cantos disponíveis; 
+3. Caso não exista mais nenhuma peça em campo do jogador, a peça apenas pode ser colocada num dos cantos disponíveis; 
 
-1. Uma peça não pode ser colocada por cima de outra.
+4. Uma peça não pode ser colocada por cima de outra.
 
 Para validar todos estes casos foi preciso uma longa lista de condições, garantindo o bom funcionamento dos nossos operadores.
 
@@ -396,13 +396,13 @@ Este foi implementado da seguinte forma (iterativa).
 
 Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
 
-|                | A   | B   |C    |D    |E  |F  |
-| --------------:|:---:|:---:|:---:|:---:|:-:|:-:|
-| Nós Gerados    |6    |16   |47   |85   |N/A|N/A|
-| Nós Explorados |1    |2    |9    |13   |N/A|N/A|
-| Penetrância    |0.17 |0.13 |0.06 |0.04 |N/A|N/A|
-| Ramificação    |6    |3.531|3.221|4.017|N/A|N/A|
-| Tempo(ms)      |2    |4    |18   |48   |N/A|N/A|
+|                |  A   |   B   |   C   |   D   |  E   |  F   |
+| -------------: | :--: | :---: | :---: | :---: | :--: | :--: |
+|    Nós Gerados |  6   |  16   |  47   |  85   | N/A  | N/A  |
+| Nós Explorados |  1   |   2   |   9   |  13   | N/A  | N/A  |
+|    Penetrância | 0.17 | 0.13  | 0.06  | 0.04  | N/A  | N/A  |
+|    Ramificação |  6   | 3.531 | 3.221 | 4.017 | N/A  | N/A  |
+|      Tempo(ms) |  2   |   4   |  18   |  48   | N/A  | N/A  |
 
 É necessário salientar que onde está assinalado "N/A" foram tabuleiros com mais jogadas possiveis, e uma vez que estamos a trabalhar numa versão gratuita de *LispWorks* estavamos a exceder a memória disponivel antes de encontrar uma solução consistente.
 
@@ -444,13 +444,13 @@ Este foi implementado da seguinte forma (iterativa).
 
 Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
 
-|                | A   | B   |C    |D    |E    |F    |
-| --------------:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Nós Gerados    |6    |16   |30   |24   |83   |455  |
-| Nós Explorados |1    |2    |9    |3    |14   |26   |
-| Penetrância    |0.17 |0.13 |0.10 |0.13 |0.17 |0.06 |
-| Ramificação    |6    |3.531|2.712|2.485|1.218|1.824|
-| Tempo(ms)      |1    |6    |7    |13   |32   |258  |
+|                |  A   |   B   |   C   |   D   |   E   |   F   |
+| -------------: | :--: | :---: | :---: | :---: | :---: | :---: |
+|    Nós Gerados |  6   |  16   |  30   |  24   |  83   |  455  |
+| Nós Explorados |  1   |   2   |   9   |   3   |  14   |  26   |
+|    Penetrância | 0.17 | 0.13  | 0.10  | 0.13  | 0.17  | 0.06  |
+|    Ramificação |  6   | 3.531 | 2.712 | 2.485 | 1.218 | 1.824 |
+|      Tempo(ms) |  1   |   6   |   7   |  13   |  32   |  258  |
 
 Neste caso já conseguimos encontrar soluções para todos os tabuleiros, dado uma profundidade que fosse grande o suficiente para explorar um ramo até ao fim, ou chegar ao ramo mais curto. Se a profundidade for reduzida entramos no problema do BFS e não é possivel encontrar uma solução através do *LispWorks* ou, se a profundidade for demasiado baixa, não é possivel encontrar uma solução de todo.
 
@@ -526,10 +526,10 @@ Ao inicio ainda tentamos uma abordagem sem pesos, mas mostrou ser pouco eficaz p
 
 Para comprovar a eficácia desta heurística perante a fornecida pelos docentes, com o objetivo de ficar sem jogadas mais rápido possível, estudamos a profundidade das soluções obtidas que se traduz no comprimento da solução e número de jogadas realizadas pelo algoritmo.
 
-|Número de Jogadas   | A | B | C | D | E |F  |
-|-------------------:|:-:|:-:|:-:|:-:|:-:|:-:|
-|Heurística Fornecida|2  |4  |5  |6  |17 |25 |
-|Nova heurística     |1  |2  |3  |5  |12 |8  |
+|    Número de Jogadas |  A   |  B   |  C   |  D   |  E   |  F   |
+| -------------------: | :--: | :--: | :--: | :--: | :--: | :--: |
+| Heurística Fornecida |  2   |  4   |  5   |  6   |  17  |  25  |
+|      Nova heurística |  1   |  2   |  3   |  5   |  12  |  8   |
 
 Como podemos observar, a nossa heurística tem uma melhoria significativa, principalmente quando o tabuleiro tem vários caminhos possíveis. Estudos sobre a *performance* das heurísticas serão mostrados no próximo capitulo.
 
@@ -581,25 +581,25 @@ Este foi implementado da seguinte forma (iterativa).
 
 Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
 
-|Heurística Docente | A   | B   |C    |D    |E    |F    |
-| --------------:   |:---:|:---:|:---:|:---:|:---:|:---:|
-| Nós Gerados       |10   |27   |45   |46   |112  |346  |
-| Nós Explorados    |3    |5    |6    |7    |18   |26   |
-| Penetrância       |0.20 |0.15 |0.11 |0.13 |0.15 |0.07 |
-| Ramificação       |2.702|1.936|1.850|1.631|1.890|1.172|
-| Tempo(ms)         |2    |3    |7    |13   |16   |35   |
+| Heurística Docente |   A   |   B   |   C   |   D   |   E   |   F   |
+| -----------------: | :---: | :---: | :---: | :---: | :---: | :---: |
+|        Nós Gerados |  10   |  27   |  45   |  46   |  112  |  346  |
+|     Nós Explorados |   3   |   5   |   6   |   7   |  18   |  26   |
+|        Penetrância | 0.20  | 0.15  | 0.11  | 0.13  | 0.15  | 0.07  |
+|        Ramificação | 2.702 | 1.936 | 1.850 | 1.631 | 1.890 | 1.172 |
+|          Tempo(ms) |   2   |   3   |   7   |  13   |  16   |  35   |
 
 Comparativamente aos algoritmos anteriores, a diferença da solução obtida é muito elevada, e em média a penetrância também é superior no A*.
 
 Vamos agora testar o mesmo algoritmo, mas com a nova heurística.
 
-|Heurística Original| A   | B   |C    |D    |E    |F    |
-| -----------------:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Nós Gerados       |6    |11   |20   |22   |125  |281  |
-| Nós Explorados    |2    |3    |5    |5    |47   |66   |
-| Penetrância       |0.17 |0.18 |0.15 |0.18 |0.10 |0.05 |
-| Ramificação       |6    |2.854|2.311|1.817|1.890|1.403|
-| Tempo(ms)         |3    |6    |9    |14   |80   |169  |
+| Heurística Original |  A   |   B   |   C   |   D   |   E   |   F   |
+| ------------------: | :--: | :---: | :---: | :---: | :---: | :---: |
+|         Nós Gerados |  6   |  11   |  20   |  22   |  125  |  281  |
+|      Nós Explorados |  2   |   3   |   5   |   5   |  47   |  66   |
+|         Penetrância | 0.17 | 0.18  | 0.15  | 0.18  | 0.10  | 0.05  |
+|         Ramificação |  6   | 2.854 | 2.311 | 1.817 | 1.890 | 1.403 |
+|           Tempo(ms) |  3   |   6   |   9   |  14   |  80   |  169  |
 
 A penetrância embora situacional, foi melhorada mas a ramificação aumentou juntamente com o tempo necessário para chegar a uma solução, no entanto, como demonstrado no capitulo anterior das heurísticas foi possível chegar a soluções com um número de jogadas muito inferior à heurística dos docentes, assim podemos afirmar que a heurística foi alterada e melhorada.
 
@@ -609,6 +609,260 @@ Sobre o algoritmo, o tempo e soluções obtidas foram muito melhores que a dos a
 
 A procura do algoritmo A* consegue encontrar a solução ótima e num espaço tempo bastante satisfatório para o problema em questão e tendo em conta a heurística, no entanto existe outro problema que devemos considerar, a memória não é infinita.
 
-Para colmatar a memória limitada, podemos utilizar este algoritmo que não carrega toda a árvore de uma só vez, utilizando limites para saltar nós em favor de nós de menor custo. Em contra partida, como não carregamos toda a árvore de uma só vez, cada vez que formos aumentar o nosso limite, iremos gerar a árvore a partir da raiz, que irá aumentar o número de nós gerados, explorados e o tempo de execução.
+Para colmatar a memória limitada, podemos utilizar o IDA*, posit este não carrega toda a árvore de uma só vez, utilizando limites para saltar nós em favor de nós de menor custo. Em contra partida, como não carregamos toda a árvore de uma só vez, cada vez que formos aumentar o nosso limite, iremos gerar a árvore a partir da raiz, que irá aumentar o número de nós gerados, explorados e o tempo de execução.
 
 Este foi implementado da seguinte forma (iterativa).
+
+```lisp
+(defun ida-star (node solution expand operators heuristic cost &optional (bound (funcall cost node)))  
+  "Iterative-deepening-A* works as follows: at each iteration, perform a depth-first search,
+   cutting off a branch when its total cost f(n)=g(n)+h(n) exceeds a given threshold.
+   This threshold starts at the estimate of the cost at the initial state, and increases for each iteration of the algorithm.
+   At each iteration, the threshold used for the next iteration is the minimum cost of all values that exceeded the current threshold."
+  (labels ((ida-star-aux (node solution expand operators heuristic cost &optional (bound (funcall cost node)))
+             (setq *open* (list node))
+             (setq *close* nil)
+             (loop while (not (null *open*)) do       
+                   ;Node cost is bigger than the current bound, start a new search with a bigger bound
+                   (if (> (funcall cost (car *open*)) bound) (return (ida-star node solution expand operators heuristic cost (funcall cost (car *open*)))))
+                   ;Nodes cost is lesser than the current bound, keep searching with the current bound
+                           (let* ((current-node (car *open*)) 
+                                  (unfiltered-nodes (funcall expand current-node operators heuristic))
+                                  (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+                             (add-explored 1)
+                             (add-generate (length expanded-nodes))
+                             (setq *close* (append *close* (list current-node)))
+                             (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+                             (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+                             (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+                             ;Failsafe
+                             (stable-sort *open* #'< :key cost)))))
+    (start-performance)  
+    ;auxiliar function to avoid restarting performance operations
+    (ida-star-aux node solution expand operators heuristic cost bound)))
+```
+Ignorando as funções relacionadas com *performance* que serão mostradas e explicadas mais à frente, obtivemos os seguintes resultados através deste algoritmo sobre os tabuleiros fornecidos.
+
+| Heurística Docente |   A   |   B   |   C   |   D   |   E   |   F   |
+| -----------------: | :---: | :---: | :---: | :---: | :---: | :---: |
+|        Nós Gerados |  10   |  27   |  45   |  46   |  112  |  346  |
+|     Nós Explorados |   3   |   5   |   6   |   7   |  18   |  26   |
+|        Penetrância | 0.20  | 0.15  | 0.11  | 0.13  | 0.15  | 0.07  |
+|        Ramificação | 2.702 | 1.936 | 1.850 | 1.631 | 1.890 | 1.172 |
+|          Tempo(ms) |   1   |   2   |   4   |   7   |  12   |  33   |
+
+Comparativamente aos algoritmos não informados, a diferença da solução obtida é muito elevada, e em média a penetrância também é superior no IDA*.
+
+Vamos agora testar o mesmo algoritmo, mas com a nova heurística.
+
+| Heurística Original |  A   |   B   |   C   |   D   |   E   |   F   |
+| ------------------: | :--: | :---: | :---: | :---: | :---: | :---: |
+|         Nós Gerados |  6   |  11   |  20   |  22   |  125  |  281  |
+|      Nós Explorados |  2   |   3   |   5   |   5   |  47   |  66   |
+|         Penetrância | 0.17 | 0.18  | 0.15  | 0.18  | 0.10  | 0.05  |
+|         Ramificação |  6   | 2.854 | 2.311 | 1.817 | 1.890 | 1.403 |
+|           Tempo(ms) |  2   |   4   |   8   |  14   |  62   |  140  |
+
+Podemos perceber que os resultados, quer de solução quer de *performance* foram muito similares aos encontrados no A*.
+
+A solução ser igual ao de A* é esperado, pois ambos vão obter a mesma solução dada uma heurística igual.
+
+No entanto, neste caso não podemos comprovar um aumento de nós gerados nem explorados, pois as nossas heurísticas não têm tendência a aumentar de valor, logo a árvore não irá ser gerada mais que uma vez.
+
+### 3.4 Ciclicidade
+
+Todos os algoritmos de procura que implementamos tiveram em conta a possível ciclicidade existente nos grafos de jogo, pois existem vários caminhos para chegar a uma certa posição do tabuleiro.
+
+No caso do BFS e DFS é simples de resolver, fazemos uma *filtragem* dos nós expandidos que existem na lista de abertos e/ou fechados e estes são descartados.
+
+```lisp
+(defun filter-nodes (node-list open-list close-list)
+  (cond ((null node-list) nil)
+        ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
+        (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
+```
+
+Mas no caso do A* e IDA* foi preciso, adicionalmente à função anterior, ter em conta que podemos encontrar um nó que embora tenha um estado já existente na lista de abertos e/ou fechados, este novo nó pode ser melhor que os existentes. Nesse caso é necessário atualizar o nó que se encontra na lista de abertos pelo nó encontrado, e descartar o nó de maior custo.
+
+```lisp
+(defun filter-nodes-update-open (node-list open-list &optional (cost 'node-f))
+  "Verifies if any of the duplicate nodes are better than the current nodes"
+  (cond ((null node-list) open-list)
+        ((node-existsp (car node-list) open-list)
+         (let* ((new-node (car node-list)) (existing-node (car (member new-node open-list :test 'equal-node))))
+           (if (>= (funcall cost new-node) (funcall cost existing-node))
+               (filter-nodes-update-open (cdr node-list) open-list)
+             (filter-nodes-update-open (cdr node-list) (substitute new-node existing-node open-list :count 1 :test #'equal))))) 
+        (t (filter-nodes-update-open (cdr node-list) open-list))))
+```
+
+Esta devolve uma cópia da lista de abertos atualizada com os nós de menor custo.
+
+### 3.5 Cálculos de *Performance*
+
+Para obter as tabelas anteriormente usadas foi preciso desenvolver funções capazes de calcular os dados pretendidos. Isto foi tudo calculado dentro de um espaço lexical criado para os algoritmos de procura.
+
+```lisp
+(let ((results (list 0 -1 0 nil)))
+     ;Algoritmos de procura
+     ;Funções de cálculo
+   	 ...)
+```
+
+Esta lista de *results* controla os nós explorados, gerados, tempo decorrido e nó solução. Uma vez que iremos usar funções destrutivas, e depois do docente ter aprovado esta ideia, foi necessário utilizar este espaço. Os resultados a obter foram os seguintes:
+
+#### Nós gerados e explorados
+
+Para os nós gerados e explorados apenas foi preciso utilizar funções que somam valores aos que existem nos resultados.
+
+```lisp
+(defun add-generate (value) (setf results (list (+ (nth 0 results) value) (nth 1 results) (nth 2 results) (nth 3 results))))
+
+(defun add-explored (value) (setf results (list (nth 0 results) (+ (nth 1 results) value) (nth 2 results) (nth 3 results))))
+```
+
+#### Tempo de Execução
+
+Para calcular o tempo de execução **em milissegundos** foram usadas duas funções, uma para atualizar o tempo dos *results* para o tempo em milissegundos em que a procura começou e outro que calcula a diferença entre o tempo quando acabou e quando começou.
+
+```lisp
+(defun start-timer () 
+  "Starts timer with the internal-real-time function for better precision, the time is counted in ms"
+  (setf results (list (nth 0 results) (nth 1 results) (get-internal-real-time) (nth 3 results))))
+
+(defun stop-timer () 
+  "Calculates the difference between the current time and the timer registered on start in ms"
+  (setf results (list (nth 0 results) (nth 1 results) (- (get-internal-real-time)(nth 2 results)) (nth 3 results))))
+```
+
+#### Penetrância
+
+A fórmula da penetrância é dada por $Penetrância=ComprimentoSolução/Total de nós gerados$ e para isso recorremos a utilizar o número de nós gerados no *results* e o comprimento da solução do nó guardado no *results* através de uma função mostrada no capitulo dos nós.
+
+```lisp
+(defun calculate-pen(node) 
+  "Calculates penetration with L/T"
+  (/ (node-solution-size node) (nth 0 results)))
+```
+
+#### Ramificação Média
+
+Este é o elemento mais complexo de calcular, pois a expressão da ramificação média é $B + B^1 + B^2 ... + B^L = T$ onde **B** é a nossa ramificação média, **L** comprimento da solução e **T** o total de nós gerados. Uma vez que temos uma equação que pode atingir vários niveis, foi nos sugerido ([e dado em aula teórica*) uma função que implementa a fórmula de Newton Raphson.
+
+```lisp
+(defun Newton-Raphson
+       (f
+        f-prime
+        x-left
+        x-right
+        &key
+        (accuracy 0.01)
+        (maximum-number-of-iterations 100)
+        (prevent-bracket-jumping-p t))
+  "given
+   [1] f (required)
+       ==> a function with a single argument
+   [2] f-prime (required)
+       ==> another function with a single argument,
+           this one being the first derivative of f
+   [3] x-left (required)
+       ==> left-hand bracket for the desired root;
+           i.e., left-hand bracket <= desired root
+   [4] x-right (required)
+       ==> right-hand bracket for the desired root;
+           i.e., desired root <= right-hand bracket"
+  (assert (< x-left x-right))  
+  (let ((x (* 0.5 (+ x-left x-right)))
+        delta-x denom-for-accuracy-test)      
+    (dotimes (j maximum-number-of-iterations                
+                (if (not (cerror "returns solution so far"
+                                 "exceeding maximum number of iterations"))                    
+                    (values x)))
+      (setf delta-x (/ (funcall f x)  (funcall f-prime x)))
+      (setf denom-for-accuracy-test (+ (abs x)
+                                       (abs (decf x delta-x)))) 
+      (cond
+       (prevent-bracket-jumping-p
+        (if (< x x-left) (setf x x-left))
+        (if (> x x-right) (setf x x-right))
+        (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
+          (return (values x ))))
+       ((<= x-left x x-right)
+        (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
+          (return (values x ))))
+       (t
+        (error "jumped out of brackets")))))) 
+```
+
+[^*]: http://staff.washington.edu/dbp/SAPACLISP-1.x/basic-math.lisp
+
+No entanto para utilizar a fórmula é preciso termos a equação em função e a sua derivada.
+
+```lisp
+;;Base function to calculate ramification
+;;We have b+b^1+b^2...+b^L = T and we can convert it into
+;;b+b^1+b^2...+b^L - T = 0
+(defun base-ramification (b)
+  "Ramification expression based on a variable B and the solution node found in results"
+  (labels ((build-expression(b l)
+             (cond ((= l 1) b)
+                   (t (+ (expt b l) (build-expression b (1- l)))))))
+    (- (build-expression b (node-solution-size (get-node))) (get-generate))))
+
+;;To be used on Raphson, we need the first derivative of our ramification expression
+(defun derivative-ramification (b)
+  "First derivative expression of the ramification formula used on base-ramification"
+  (labels ((build-expression(b l)
+             (cond ((= l 1) 1)
+                   (t (+ (* l (expt b (1- l))) (build-expression b (1- l)))))))
+    (build-expression b (node-solution-size (get-node)))))
+```
+
+E por fim ainda é preciso ter cuidado com um caso de exceção, quando a solução apenas tem 1 elemento temos uma situação onde $B = T$ onde não precisamos de utilizar o método de Raphson e podemos diretamente devolver $T$.
+
+```lisp
+(defun calculate-average-ramification()
+  "Used to calculate our average ramification base on Newton-Raphson and testing if a solution only contains one node"
+  (if (= (node-solution-size (get-node)) 1)
+      ;If the solution only contains 1 node, then we have ramification = generate nodes (b^1 = t)
+      (get-generate)
+    ;Else we can apply the normal formula b+b^1+b^2....b^L = T
+    (Newton-Raphson #'base-ramification #'derivative-ramification 0.0 5.0)))
+```
+
+#### Inicio e fim
+
+Por fim é preciso controlar o começo e o fim do algoritmo, pois uma vez que estamos a trabalhar num espaço léxico com funções destrutivas, precisamos de garantir que quando o algoritmo começa, o *results* é reiniciado e no fim que o *results* esteja atualizado com o nó solução.
+
+```lisp
+(defun start-performance ()
+  "Starts performance with the results at 0"
+  (setf results (list 0 0 0 nil))
+  (start-timer))
+
+(defun stop-performance (node)
+  "Stops timer and prints the results with print-results function"
+  (stop-timer)
+  (setf results (list (nth 0 results) (nth 1 results) (nth 2 results) node))
+  (print-results))  
+```
+
+Os sítios onde estas funções são usadas já foi mostrado anteriormente nos capítulos dos respetivos
+algoritmos.
+
+### 3.6 Resultados
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
