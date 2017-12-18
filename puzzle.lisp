@@ -271,7 +271,7 @@
           (t (node-original (node-parent node)))))
 
 (defun node-steps (node)
-  "Gets all the play steps made on a node"
+  "Gets, by order, all the steps taken by the node to the current state"
   (labels ((steps-aux (node)
              (cond ((null node) nil)
                    ((null (node-parent node)) nil)
@@ -279,6 +279,7 @@
     (reverse (steps-aux node))))
 
 (defun calculate-made-step (current-position parent-position)
+  "Calculates step taken between states"
   (cond ((null parent-position))
         ((< (nth 0 current-position) (nth 0 parent-position)) "Colocou uma peça 1x1")
         ((< (nth 1 current-position) (nth 1 parent-position)) "Colocou uma peça 2x2")
@@ -503,11 +504,12 @@
     (length (apply #'append (mapcar #'(lambda (operation) 
                            (possible-block-positions (node-board state) operation)) (operators)))))
 
-(defun heuristic-custom-complex (state)
+(defun heuristic-custom-complex (state &optional (sq1mod 3) (sq2mod 2) (crossmod 1))
+  "Heuristic used to benefid boards with less possible places"
   (flet ((count-squares-aux (board operation)
-           (cond ((eq operation 'square-1x1) (* (length (possible-block-positions board operation)) 1))
-                 ((eq operation 'square-2x2) (* (length (possible-block-positions board operation)) 2))
-                 ((eq operation 'cross) (* (length (possible-block-positions board operation)) 3))
+           (cond ((eq operation 'square-1x1) (* (length (possible-block-positions board operation)) sq1mod))
+                 ((eq operation 'square-2x2) (* (length (possible-block-positions board operation)) sq2mod))
+                 ((eq operation 'cross) (* (length (possible-block-positions board operation)) crossmod))
                  (t 0))))       
     (apply #'+ (mapcar #'(lambda (operation) 
                            (count-squares-aux (node-board state) operation)) (operators)))))
