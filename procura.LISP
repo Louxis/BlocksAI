@@ -106,7 +106,6 @@
           (stable-sort *open* #'< :key cost)
 )))
 
-
 ;;;IDA* search iterative
 ;;;(node-print (ida-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares 'node-f))
 (defun ida-star (node solution expand operators heuristic cost &optional (bound (funcall cost node)))  
@@ -135,6 +134,62 @@
     (start-performance)  
     ;auxiliar function to avoid restarting performance operations
     (ida-star-aux node solution expand operators heuristic cost bound)))
+
+;;;EXPERIMENTAL
+(defun bfs-rec (node solution expand operatores)
+  (labels ((bfs-aux (node solution expand operatores open close)
+             (let ((expanded-nodes (filter-nodes (funcall expand node operatores 'bfs nil) open close)))
+             (cond ((null open) nil)
+                   ((funcall solution node) (stop-performance node) node)
+                   (t (add-explored 1)
+                      (add-generate (length expanded-nodes))                      
+                      (bfs-aux (car open) solution expand operatores (open-bfs (cdr open) expanded-nodes) (append close (list node))))))))
+    (start-performance)
+    (bfs-aux node solution expand operatores (list node) nil)))
+
+(defun dfs-rec (node solution expand operatores p)
+  (labels ((dfs-aux (node solution expand operatores open close p)
+             (let ((expanded-nodes (filter-nodes (funcall expand node operatores 'dfs p) open close)))
+             (cond ((null open) nil)
+                   ((funcall solution node) (stop-performance node) node)
+                   (t (add-explored 1)
+                      (add-generate (length expanded-nodes))  
+                      (dfs-aux (car open) solution expand operatores (open-dfs (cdr open) expanded-nodes) (append close (list node)) p))))))
+    (start-performance)
+    (dfs-aux node solution expand operatores (list node) nil p)))
+
+(defun a-star-rec (node solution expand operators heuristic cost)
+  (labels ((a-aux (node solution expand operators heuristic cost open close)
+             (let* ((unfiltered-nodes (funcall expand node operators heuristic))
+                    (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+               (add-explored 1)
+               (add-generate (length expanded-nodes))
+               (cond ((null open) nil)
+                     ((funcall solution node) (stop-performance node) node)
+                     (t (a-aux (car open) solution expand operators heuristic cost
+                               (stable-sort (filter-nodes-update-open unfiltered-nodes (ordered-insert-list (cdr open) expanded-nodes)) #'< :key cost)
+                               (append close (list node))))))))
+    (start-performance)
+    (a-aux node solution expand operators heuristic cost (list node) nil)))
+
+(defun ida-star-rec (node solution expand operators heuristic cost)
+  (labels ((ida-aux (node solution expand operators heuristic cost open close root &optional (bound (funcall cost node)))
+             (let* ((unfiltered-nodes (funcall expand node operators heuristic))
+                    (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+               (cond ((> (funcall cost node) bound) 
+                      (ida-aux root solution expand operators heuristic cost
+                               (list root) nil root (funcall cost node)))
+                     (t
+                      (add-explored 1)
+                      (add-generate (length expanded-nodes))
+                      (cond ((null open) nil)
+                            ((funcall solution node) (stop-performance node) node)
+                            (t (ida-aux (car open) solution expand operators heuristic cost
+                                        (stable-sort (filter-nodes-update-open unfiltered-nodes (ordered-insert-list (cdr open) expanded-nodes)) #'< :key cost)
+                                        (append close (list node)) root bound))))))))
+    (start-performance)
+    (ida-aux node solution expand operators heuristic cost (list node) nil node)))
+;;;EXPERIMENTAL
 
 ;;;Perfomance calculations
 (defun start-performance ()
@@ -167,7 +222,7 @@
 
 (defun calculate-pen(node) 
   "Calculates penetration with L/T"
-  (/ (node-solution-size node) (nth 0 results)))
+  (/ (node-solution-size node) (if (> (get-generate) 0) (get-generate) 1)))
 
 (defun print-results ()
   "Prints all the relevant results based on the final node, only to be used by the function stop-performance"
@@ -187,7 +242,7 @@ Ramificação média: ~s~%"
 
 (defun calculate-average-ramification()
   "Used to calculate our average ramification base on Newton-Raphson and testing if a solution only contains one node"
-  (if (= (node-solution-size (get-node)) 1)
+  (if (<= (node-solution-size (get-node)) 1)
       ;If the solution only contains 1 node, then we have ramification = generate nodes (b^1 = t)
       (get-generate)
     ;Else we can apply the normal formula b+b^1+b^2....b^L = T
@@ -224,7 +279,7 @@ Ramificação média: ~s~%"
                     (values x)))
       (setf delta-x (/ (funcall f x)  (funcall f-prime x)))
       (setf denom-for-accuracy-test (+ (abs x)
-                                       (abs (decf x delta-x)))) 
+                                       (abs (decf x delta-x))))  
       (cond
        (prevent-bracket-jumping-p
         (if (< x x-left) (setf x x-left))
