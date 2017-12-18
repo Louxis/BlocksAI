@@ -200,17 +200,24 @@ Ramificação média: ~s~%"
 Nós gerados: ~d~%
 Nós explorados: ~d~%
 Tempo de execução: ~dms~%
-Penetrância: ~d~%~%
-Ramificação média: ~s~%~%"
+Penetrância: ~d~%
+Ramificação média: ~s~%
+Peças finais:
+        1x1 = ~d
+        2x2 = ~d
+     Cruzes = ~d~%~%"
           (node-solution-size (get-node))
           (get-generate)
           (get-explored)
           (get-timer)
           (calculate-pen (get-node))
-          (calculate-average-ramification)))
+          (calculate-average-ramification)
+          (first (node-pieces (node-state (get-node))))
+          (second (node-pieces (node-state (get-node))))
+          (third (node-pieces (node-state (get-node))))))
     (board-write-file (node-board (node-state (node-original (get-node)))) pathname "Inicio:~%")
-    (board-line-write (node-steps (get-node)) pathname)
-    (board-action-write (node-board (node-state (get-node))) pathname "Fim:~%")
+    (board-action-write (node-steps (get-node)) pathname)
+    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%")
     (format t "~%Results were saved in ~s~%~%" pathname))
 
 (defun board-line-write (line pathname)
@@ -221,7 +228,8 @@ Ramificação média: ~s~%~%"
 (defun board-action-write (positions pathname)
   (labels ((print-aux (positions stream &optional number)
              (cond ((null positions) (format stream "~%"))
-                   (t (format stream "~d- ~d~%" (car positions) number) (print-aux (cdr positions) stream (1+ number))))))
+                   ((eq (car positions) "") (print-aux (cdr positions) stream number))
+                   (t (format stream "~d- ~d~%" number (car positions)) (print-aux (cdr positions) stream (1+ number))))))
     (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
       (print-aux positions out 1))))
              

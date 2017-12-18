@@ -274,11 +274,12 @@
   "Gets all the play steps made on a node"
   (labels ((steps-aux (node)
              (cond ((null node) nil)
-                   (t (cons (calculate-made-step (node-pieces (node-state node)) (node-pieces (node-state (node-parent node)))) (node-steps (node-parent node)))))))
-    (steps-aux node)))
+                   ((null (node-parent node)) nil)
+                   (t (cons (calculate-made-step (node-pieces (node-state node)) (node-pieces (node-state (node-parent node)))) (steps-aux (node-parent node)))))))
+    (reverse (steps-aux node))))
 
 (defun calculate-made-step (current-position parent-position)
-  (cond ((null parent-position) "")
+  (cond ((null parent-position))
         ((< (nth 0 current-position) (nth 0 parent-position)) "Colocou uma peça 1x1")
         ((< (nth 1 current-position) (nth 1 parent-position)) "Colocou uma peça 2x2")
         ((< (nth 2 current-position) (nth 2 parent-position)) "Colocou uma peça cruz")))

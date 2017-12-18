@@ -1,10 +1,5 @@
-;(compile-file "C:/Users/jcper/Desktop/puzzle" :load t) 
-;(compile-file "C:/Users/jcper/Desktop/procura" :load t) 
-
-"C:/Users/jcper/Desktop/compiletest.txt"
-"C:/Users/jcper/Desktop/problemas.dat"
-"C:/Users/jcper/Desktop/bfs1.txt"
-"C:/Users/jcper/Desktop/dfs2.txt"
+;;;;Main file
+;;;;Made by José Pereira and Lyudmyla Todoriko
 
 ;;Read file function. Reads the file in the given filepath
 (defun read-file (filename)
