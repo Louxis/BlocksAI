@@ -71,6 +71,7 @@
 (defun dfs-io-aux (board)
   (format t "~%Please insert maximum depth ~%")
   (let ((max-depth (read)))
+    (if (eq max-depth 0) nil)
     (cond ((numberp max-depth) 
            (dfs-it (node-create(list board (state-calculator board)) nil 0 0 0 0 ) 
                      'solution-nodep 'node-expand (operators) max-depth))
@@ -110,7 +111,7 @@
   (let ((algorithm (algorithm-number)))
     (cond ((eq algorithm 'exit) (format t "~% Ended Session"))
           ((= algorithm 1) (bfs-io-aux board)); BFS
-          ((= algorithm 2) (dfs-io-aux board)); DFS
+          ((= algorithm 2) (cond ((null (dfs-io-aux board)) (format t "~%Depth has to be bigger than 0")(start boards)))); DFS
           ((= algorithm 3) (a-star-io-aux board)); A*
           ((= algorithm 4) (ida-star-io-aux board)); IDA*
           (t (choose-algorithm board boards))

@@ -77,6 +77,7 @@
 (defun dfs-it (node solution expand operators p)
   "Depth-first search (DFS) is an algorithm for traversing or searching tree or graph data structures.
    One starts at the root and explores as far as possible along each branch before backtracking."
+  (if (eq p 0) nil)
   (start-performance)
   (setq *open* (list node))
   (setq *close* nil)
