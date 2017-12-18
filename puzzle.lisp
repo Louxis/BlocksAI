@@ -1,5 +1,7 @@
+
 ;;;;Puzzle logic
 ;;;;Made by José Pereira and Lyudmyla Todoriko
+
 
 ;;;Board 
 (defun empty-board (&optional (board-size 14))

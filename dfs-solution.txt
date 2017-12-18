@@ -4,7 +4,7 @@ Nós gerados: 6
 
 Nós explorados: 1
 
-Tempo de execução: 2ms
+Tempo de execução: 3ms
 
 Penetrância: 1/6
 

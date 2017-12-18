@@ -1,3 +1,4 @@
+ 
 ;;;;Searching algorithms
 ;;;;Made by José Pereira and Lyudmyla Todoriko
 ;;;;The node structure is {((board) (pieces remaining)) (parent node) (g) (optional h and f)
@@ -184,8 +185,7 @@ Ramificação média: ~s~%"
           (get-explored)
           (get-timer)
           (calculate-pen (get-node))
-          (calculate-average-ramification))
-  (results-write-file "C:/Users/jcper/Desktop/ola.txt"))
+          (calculate-average-ramification)))
 
 (defun board-write-file (board pathname &optional message)
   (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
@@ -209,7 +209,8 @@ Ramificação média: ~s~%~%"
           (calculate-pen (get-node))
           (calculate-average-ramification)))
     (board-write-file (node-board (node-state (node-original (get-node)))) pathname "Inicio:~%")
-    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%"))
+    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%")
+    (format t "~%Results were saved in ~s~%~%" pathname))
 
 (defun board-line-write (line pathname)
   (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)    

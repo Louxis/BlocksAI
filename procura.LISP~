@@ -1,6 +1,7 @@
+(in-package :procura)
 ;;;;Searching algorithms
 ;;;;Made by José Pereira and Lyudmyla Todoriko
-;;;;The node structure is {(board) (pieces remaining) (parent node) (g) (optional h and f)
+;;;;The node structure is {((board) (pieces remaining)) (parent node) (g) (optional h and f)
 
 ;;;Global variables
 (defparameter *open* nil)
@@ -25,6 +26,17 @@
   (cond ((null node-list) nil)
         ((or (node-existsp (car node-list) open-list) (node-existsp (car node-list) close-list)) (filter-nodes (cdr node-list) open-list close-list))
         (t (cons (car node-list) (filter-nodes (cdr node-list) open-list close-list)))))
+
+;;;Use with A*
+(defun filter-nodes-update-open (node-list open-list &optional (cost 'node-f))
+  "Verifies if any of the duplicate nodes are better than the current nodes"
+  (cond ((null node-list) open-list)
+        ((node-existsp (car node-list) open-list)
+         (let* ((new-node (car node-list)) (existing-node (car (member new-node open-list :test 'equal-node))))
+           (if (>= (funcall cost new-node) (funcall cost existing-node))
+               (filter-nodes-update-open (cdr node-list) open-list)
+             (filter-nodes-update-open (cdr node-list) (substitute new-node existing-node open-list :count 1 :test #'equal))))) 
+        (t (filter-nodes-update-open (cdr node-list) open-list))))
 
 ;;;Performance lexic
 (let ((results (list 0 -1 0 nil)))
@@ -72,8 +84,8 @@
                              (stop-performance expanded-node)(return expanded-node)))) expanded-nodes))))
 
 ;;;A* search iterative
-;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares))
-(defun a-star (node solution expand operators heuristic)
+;;;Test: (node-print (a-star (test-node-a) 'solution-nodep 'node-expand-a (operators) 'heuristic-squares 'node-f))
+(defun a-star (node solution expand operators heuristic cost)
   "A* is an informed search algorithm, or a best-first search, meaning that it solves problems by searching among all possible paths
    to the solution (goal) for the one that incurs the smallest cost.
    Will use the given heuristic"
@@ -81,12 +93,18 @@
   (setq *open* (list node))
   (setq *close* nil)
   (loop while (not (null *open*)) do
-        (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators heuristic) *open* *close*)))            
+        (let* ((current-node (car *open*)) 
+               (unfiltered-nodes (funcall expand current-node operators heuristic))
+               (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*)))            
           (add-explored 1)
           (add-generate (length expanded-nodes))
           (setq *close* (append *close* (list current-node)))
           (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+          ;(setq *open* (append (cdr *open*) expanded-nodes))       
           (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+          (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+          ;Failsafe
+          (stable-sort *open* #'< :key cost)
 )))
 
 
@@ -104,12 +122,17 @@
                    ;Node cost is bigger than the current bound, start a new search with a bigger bound
                    (if (> (funcall cost (car *open*)) bound) (return (ida-star node solution expand operators heuristic cost (funcall cost (car *open*)))))
                    ;Nodes cost is lesser than the current bound, keep searching with the current bound
-                   (let* ((current-node (car *open*)) (expanded-nodes (filter-nodes (funcall expand current-node operators heuristic) *open* *close*)))  
-                     (add-explored 1)
-                     (add-generate (length expanded-nodes))
-                     (setq *close* (append *close* (list current-node)))
-                     (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
-                     (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))))))
+                           (let* ((current-node (car *open*)) 
+                                  (unfiltered-nodes (funcall expand current-node operators heuristic))
+                                  (expanded-nodes (filter-nodes unfiltered-nodes *open* *close*))) 
+                             (add-explored 1)
+                             (add-generate (length expanded-nodes))
+                             (setq *close* (append *close* (list current-node)))
+                             (cond ((funcall solution current-node) (stop-performance current-node)(return current-node)))
+                             (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
+                             (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
+                             ;Failsafe
+                             (stable-sort *open* #'< :key cost)))))
     (start-performance)  
     ;auxiliar function to avoid restarting performance operations
     (ida-star-aux node solution expand operators heuristic cost bound)))
@@ -119,6 +142,7 @@
   "Starts performance with the results at 0"
   (setf results (list 0 0 0 nil))
   (start-timer))
+
 
 (defun stop-performance (node)
   "Stops timer and prints the results with print-results function"
@@ -162,6 +186,36 @@ Ramificação média: ~s~%"
           (get-timer)
           (calculate-pen (get-node))
           (calculate-average-ramification)))
+
+(defun board-write-file (board pathname &optional message)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out message))
+  (mapcar #'(lambda (line) (board-line-write line pathname)) board)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out "~%")))
+
+(defun results-write-file (pathname)
+    (with-open-file (out pathname :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (format out "Tamanho da solução: ~d~%
+Nós gerados: ~d~%
+Nós explorados: ~d~%
+Tempo de execução: ~dms~%
+Penetrância: ~d~%~%
+Ramificação média: ~s~%~%"
+          (node-solution-size (get-node))
+          (get-generate)
+          (get-explored)
+          (get-timer)
+          (calculate-pen (get-node))
+          (calculate-average-ramification)))
+    (board-write-file (node-board (node-state (node-original (get-node)))) pathname "Inicio:~%")
+    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%")
+    (format t "~%Results were saved in ~s~%~%" pathname))
+
+(defun board-line-write (line pathname)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)    
+    (mapcar #'(lambda (cell) (format out "~d " cell)) line)
+    (format out "~%")))
 
 (defun calculate-average-ramification()
   "Used to calculate our average ramification base on Newton-Raphson and testing if a solution only contains one node"
@@ -213,8 +267,7 @@ Ramificação média: ~s~%"
         (if (< (/ (abs delta-x) denom-for-accuracy-test) accuracy)
           (return (values x ))))
        (t
-        (error "jumped out of brackets")
-        )))))  
+        (error "jumped out of brackets"))))))  
 
 ;;Base function to calculate ramification
 ;;We have b+b^1+b^2...+b^L = T and we can convert it into
