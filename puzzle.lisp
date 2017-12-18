@@ -514,17 +514,9 @@
     (apply #'+ (mapcar #'(lambda (operation) 
                            (count-squares-aux (node-board state) operation)) (operators)))))
 ;;;end heuristic
-(defun ordered-insert (list ele)
-  (cond ((null list) (list ele))
-        ((> (node-h (car list)) (node-h ele)) (cons ele list))
-        ((= (node-h (car list)) (node-h ele)) (if (> (node-depth(car list)) (node-depth ele)) (cons ele list) (cons (car list) (ordered-insert (cdr list) ele))))
-        (t (cons (car list) (ordered-insert (cdr list) ele)))))
-
-(defun ordered-insert-list (list elelist)
-  (cond ((= (length elelist) 1) (ordered-insert list (car elelist)))
-        (t (ordered-insert (ordered-insert-list list (cdr elelist)) (car elelist)))))
 ;;;End expand aux
 (defun block-count (board block-type)
+  "Used to calculate how many blocks of a certain type exist"
   (labels ((block-count-aux (x y board) 
              (cond ((= x 14) (block-count-aux 0 (1+ y) board))
                    ((= y 14) 0)

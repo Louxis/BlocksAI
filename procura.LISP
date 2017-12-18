@@ -19,6 +19,18 @@
 
 (defun node-existsp (node list)
   (if (member node list :test 'equal-node) t nil))
+
+(defun ordered-insert (list ele)
+  "Used by A* and IDA*"
+  (cond ((null list) (list ele))
+        ((> (node-h (car list)) (node-h ele)) (cons ele list))
+        ((= (node-h (car list)) (node-h ele)) (if (> (node-depth(car list)) (node-depth ele)) (cons ele list) (cons (car list) (ordered-insert (cdr list) ele))))
+        (t (cons (car list) (ordered-insert (cdr list) ele)))))
+
+(defun ordered-insert-list (list elelist)
+  "Used by A* and IDA*"
+  (cond ((= (length elelist) 1) (ordered-insert list (car elelist)))
+        (t (ordered-insert (ordered-insert-list list (cdr elelist)) (car elelist)))))
 ;;;
 
 ;;;Use with BFS and DFS
@@ -187,13 +199,6 @@ Ramificação média: ~s~%"
           (calculate-pen (get-node))
           (calculate-average-ramification)))
 
-(defun board-write-file (board pathname &optional message)
-  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
-    (format out message))
-  (mapcar #'(lambda (line) (board-line-write line pathname)) board)
-  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
-    (format out "~%")))
-
 (defun results-write-file (pathname)
     (with-open-file (out pathname :direction :output :if-exists :supersede :if-does-not-exist :create)
     (format out "Tamanho da solução: ~d~%
@@ -220,12 +225,22 @@ Peças finais:
     (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%")
     (format t "~%Results were saved in ~s~%~%" pathname))
 
+(defun board-write-file (board pathname &optional message)
+  "Prints a whole board to a file"
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out message))
+  (mapcar #'(lambda (line) (board-line-write line pathname)) board)
+  (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+    (format out "~%")))
+
 (defun board-line-write (line pathname)
+  "Prints a board line to a file"
   (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)    
     (mapcar #'(lambda (cell) (format out "~d " cell)) line)
     (format out "~%")))
 
 (defun board-action-write (positions pathname)
+  "Prints all steps made on a board to file"
   (labels ((print-aux (positions stream &optional number)
              (cond ((null positions) (format stream "~%"))
                    ((eq (car positions) "") (print-aux (cdr positions) stream number))
