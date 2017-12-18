@@ -209,13 +209,22 @@ Ramificação média: ~s~%~%"
           (calculate-pen (get-node))
           (calculate-average-ramification)))
     (board-write-file (node-board (node-state (node-original (get-node)))) pathname "Inicio:~%")
-    (board-write-file (node-board (node-state (get-node))) pathname "Fim:~%")
+    (board-line-write (node-steps (get-node)) pathname)
+    (board-action-write (node-board (node-state (get-node))) pathname "Fim:~%")
     (format t "~%Results were saved in ~s~%~%" pathname))
 
 (defun board-line-write (line pathname)
   (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)    
     (mapcar #'(lambda (cell) (format out "~d " cell)) line)
     (format out "~%")))
+
+(defun board-action-write (positions pathname)
+  (labels ((print-aux (positions stream &optional number)
+             (cond ((null positions) (format stream "~%"))
+                   (t (format stream "~d- ~d~%" (car positions) number) (print-aux (cdr positions) stream (1+ number))))))
+    (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+      (print-aux positions out 1))))
+             
 
 (defun calculate-average-ramification()
   "Used to calculate our average ramification base on Newton-Raphson and testing if a solution only contains one node"

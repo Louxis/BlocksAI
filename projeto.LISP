@@ -34,7 +34,7 @@
           ((or (pathnamep filepath) (stringp filepath)) 
            (read-file filepath) ;test file existence
            (if (eq (if (not (fboundp 'node-create)) (read-compile 'puzzle)) 'exit) 'exit
-             (if (eq (if (not (fboundp 'node-create)) (read-compile 'procura)) 'exit) 'exit (read-file filepath))))
+             (if (eq (if (not (fboundp 'bfs-it)) (read-compile 'procura)) 'exit) 'exit (read-file filepath))))
           (t (format t "~%Invalid file path!~%") (initialize)))))
 
 
