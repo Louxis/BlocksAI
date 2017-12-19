@@ -167,5 +167,5 @@
 (defun test-node-complete ()
   (list (list (test-board-complete)'(0 9 15)) nil 0 0 0 0))
 
-(defun test-node-empty ()
-  (list (list (empty-board)'(10 10 15)) nil 0 0 0 0))
+(defun test-node-empty (&optional (size 14))
+  (list (list (empty-board size)'(10 10 15)) nil 0 0 0 0))
