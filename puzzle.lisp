@@ -1,7 +1,6 @@
 ;;;;Puzzle logic
 ;;;;Made by José Pereira and Lyudmyla Todoriko
 
-
 ;;;Board 
 (defun board-print (board)
   "Prints board in a easier way to read, in a grid with the board size"
@@ -40,6 +39,11 @@
         ((or (< x 0) (< y 0)) nil)
         ((not (eq (board-cell x y board) 0)) nil)
         (t t)))
+
+
+(defun max-x (board) (length (car board)))
+
+(defun max-y (board) (length board))
 
 ;;;End of board 
 
@@ -279,8 +283,8 @@
 (defun possible-block-positions (board block-type)
   "Returns all the possible position to place a block type on the board, following the game rules"
   (labels ((possible-pos-aux (x y board) 
-             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
-                   ((= y 14) nil)
+             (cond ((= x (max-x board)) (possible-pos-aux 0 (1+ y) board))
+                   ((= y (max-y board)) nil)
                    ((eq (board-cell x y board) 1) (append (list (valid-diagonals (possible-diagonals x y board block-type) board block-type)) (possible-pos-aux (1+ x) y board)))
                    (t (possible-pos-aux (1+ x) y board)))))  
     (cond ((empty-boardp board) (valid-corner board block-type))
@@ -300,8 +304,8 @@
 (defun empty-boardp (board)
   "Verifies that the board is empty"
   (labels ((possible-pos-aux (x y board) 
-             (cond ((= x 14) (possible-pos-aux 0 (1+ y) board))
-                   ((= y 14) t)                   
+             (cond ((= x (max-x board)) (possible-pos-aux 0 (1+ y) board))
+                   ((= y (max-y board)) t)                   
                    ((eq (board-cell x y board) 1) nil )
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
@@ -333,13 +337,14 @@
                  (t 0))))       
     (apply #'+ (mapcar #'(lambda (operation) 
                            (count-squares-aux (node-board state) operation)) (operators)))))
+
 ;;;end heuristic
 ;;;End expand aux
 (defun block-count (board block-type)
   "Used to calculate how many blocks of a certain type exist"
   (labels ((block-count-aux (x y board) 
-             (cond ((= x 14) (block-count-aux 0 (1+ y) board))
-                   ((= y 14) 0)
+             (cond ((= x (max-x board)) (block-count-aux 0 (1+ y) board))
+                   ((= y (max-y board)) 0)
                    ((and (eq (board-cell x y board) 1) (eq block-type 'square-1x1) 
                          (or (not (eq (board-cell (+ x 1) y board) 1)) (not (cell-inbounds (+ x 1) y board))) 
                          (or (not (eq (board-cell x (+ y 1) board) 1)) (not (cell-inbounds x (+ y 1) board)))
