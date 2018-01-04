@@ -174,11 +174,16 @@
                    ((and (eq search 'dfs) (= (node-depth node) d)) nil)
                    (t (cons (node-create 
                              (funcall operation (first (car positions)) (second (car positions)) node)
-                             node (1+ (node-depth node)) 0 0 0)
+                             node (1+ (node-depth node)) 0 0 (+ (node-f node) (pieces-calculate operation)))
                             (place-nodes node operation (cdr positions)))))))             
     (flet ((expand-node (node operation)             
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
+
+(defun pieces-calculate (operation)
+  (cond ((eq operation 'square-1x1) 1)
+        ((eq operation 'square-2x2) 4)
+        ((eq operation 'cross) 5)))
 
 (defun create-node-from-state (state parent h) 
              (let ((g (1+ (node-cost parent))) (h-v (funcall h state)))
@@ -337,6 +342,8 @@
                  (t 0))))       
     (apply #'+ (mapcar #'(lambda (operation) 
                            (count-squares-aux (node-board state) operation)) (operators)))))
+
+
 
 ;;;end heuristic
 ;;;End expand aux

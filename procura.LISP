@@ -117,6 +117,7 @@
           (setq *open* (ordered-insert-list (cdr *open*) expanded-nodes))
           (setq *open* (filter-nodes-update-open unfiltered-nodes *open*))
           ;Failsafe
+          ;(setq *open* (qsort *open* #'< cost))
           (stable-sort *open* #'< :key cost)
 )))
 
