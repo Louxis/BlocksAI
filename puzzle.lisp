@@ -160,9 +160,9 @@
 
 ;;;Expand
 
-(defun solution-nodep (node) 
+(defun solution-nodep (node &optional (player 1)) 
   (cond ((equal (node-pieces node) '(0 0 0)) t)
-        ((null (node-expandp node)) t)
+        ((null (node-expandp node player)) t)
         (t nil)))
 
 (defun node-expand (node operators &optional (player 1))
@@ -179,34 +179,17 @@
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation player) player)))
       (apply #'append (mapcar #'(lambda(operation) (expand-node node operation player)) operators)))))
 
-(defun create-node-from-state (state parent h) 
-             (let ((g (1+ (node-cost parent))) (h-v (funcall h state)))
-               (node-create state parent (1+ (node-depth parent)) g h-v (+ g h-v))))
-
-(defun node-expand-a (node operators h)
-  (labels ((place-nodes (node operation positions) 
-             (cond ((null positions) nil)
-                   ;Check if there was any problem or if out of pieces
-                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
-                    (place-nodes node operation (cdr positions)))
-                   (t (cons (create-node-from-state  
-                             (funcall operation (first (car positions)) (second (car positions)) node) node h)
-                            (place-nodes node operation (cdr positions)))))))             
-    (flet ((expand-node (node operation)             
-             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
-      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
-
-(defun node-expandp (node)     
+(defun node-expandp (node &optional (player 1))     
   "Faster way to confirm is a node can expand, verifying if there is no possible position to go to"
-  (labels ((place-nodes (node operation positions) 
+  (labels ((place-nodes (node operation positions player) 
              (cond ((null positions) nil)
-                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
-                    (place-nodes node operation (cdr positions)))
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node player))
+                    (place-nodes node operation (cdr positions) player))
                    (t '(t)))))             
-    (flet ((expand-node (node operation)             
-             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))
+    (flet ((expand-node (node operation player)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation) player)
              ))
-      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) '(square-1x1 square-2x2 cross))))))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation player)) '(square-1x1 square-2x2 cross))))))
 
 ;;;End Expand
 
