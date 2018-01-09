@@ -116,10 +116,10 @@
   "Possible operators to use on Blokus"
   '(CROSS SQUARE-2X2 SQUARE-1X1))
 
-(defun place-square (x y board)
+(defun place-square (x y board &optional (player 1))
   "Places a 1x1 square on the given x and y of a board"
   (cond ((verify-empty-cells board (block-occupied-cells x y 'square-1x1))  
-         (replace-board x y board))
+         (replace-board x y board player))
         (t nil)))
 
 (defun update-pieces (pieces type)
@@ -129,28 +129,28 @@
         ((eq type 'cross) (list (first pieces) (second pieces) (1- (third pieces))))
         (t (print "SOMETHING WENT WRONG") nil)))
 
-(defun square-1x1 (x y node)
+(defun square-1x1 (x y node &optional (player 1))
   "Places a 1x1 square on the board if it is possible and updating the existing pieces on the node"
   (let ((pieces (node-pieces (node-state node))))
     (cond ((eq (first pieces) 0) nil)
-          (t (list (place-square x y (node-board (node-state node))) 
+          (t (list (place-square x y (node-board (node-state node)) player) 
                    (update-pieces pieces 'square-1x1))))))
 
-(defun square-2x2(x y node)
+(defun square-2x2(x y node &optional (player 1))
   "Places a 2x2 square on the board if it is possible and updating the existing pieces on the node"
          (labels ((square-aux (x y board cells) 
-                  (if (null cells) (place-square x y board) 
-                    (square-aux (first (first cells)) (second (first cells)) (place-square x y board) (cdr cells)))))
+                  (if (null cells) (place-square x y board player) 
+                    (square-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
            (let ((pieces (node-pieces (node-state node))))
              (cond ((eq (second pieces) 0) nil)
                    (t (list (square-aux x y (node-board (node-state node)) (block-occupied-cells x y 'square-2x2))
                             (update-pieces pieces 'square-2x2)))))))
 
-(defun cross (x y node)
+(defun cross (x y node &optional (player 1))
   "Places a cross (+) on the board if it is possible and updating the existing pieces on the node"
          (labels ((cross-aux (x y board cells) 
-                  (if (null cells) (place-square x y board) 
-                    (cross-aux (first (first cells)) (second (first cells)) (place-square x y board) (cdr cells)))))
+                  (if (null cells) (place-square x y board player) 
+                    (cross-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
            (let ((pieces (node-pieces (node-state node))))
              (cond ((eq (third pieces) 0) nil)
                    (t (list (cross-aux (1+ x) (1+ y) (node-board (node-state node)) (block-occupied-cells x y 'cross))
@@ -165,25 +165,19 @@
         ((null (node-expandp node)) t)
         (t nil)))
 
-(defun node-expand (node operators search &optional (d 0))
-  (labels ((place-nodes (node operation positions) 
+(defun node-expand (node operators &optional (player 1))
+  (labels ((place-nodes (node operation positions player) 
              (cond ((null positions) nil)
                    ;Check if there was any problem or if out of pieces
-                   ((null (funcall operation (first (car positions)) (second (car positions)) node))
-                    (place-nodes node operation (cdr positions)))
-                   ((and (eq search 'dfs) (= (node-depth node) d)) nil)
+                   ((null (funcall operation (first (car positions)) (second (car positions)) node player))
+                    (place-nodes node operation (cdr positions) player))
                    (t (cons (node-create 
-                             (funcall operation (first (car positions)) (second (car positions)) node)
-                             node (1+ (node-depth node)) 0 0 (+ (node-f node) (pieces-calculate operation)))
-                            (place-nodes node operation (cdr positions)))))))             
-    (flet ((expand-node (node operation)             
-             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation))))
-      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation)) operators)))))
-
-(defun pieces-calculate (operation)
-  (cond ((eq operation 'square-1x1) 1)
-        ((eq operation 'square-2x2) 4)
-        ((eq operation 'cross) 5)))
+                             (funcall operation (first (car positions)) (second (car positions)) node player)
+                             node (1+ (node-depth node)) 0 0 0)
+                            (place-nodes node operation (cdr positions) player))))))             
+    (flet ((expand-node (node operation player)             
+             (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation player) player)))
+      (apply #'append (mapcar #'(lambda(operation) (expand-node node operation player)) operators)))))
 
 (defun create-node-from-state (state parent h) 
              (let ((g (1+ (node-cost parent))) (h-v (funcall h state)))
