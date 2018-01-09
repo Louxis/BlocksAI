@@ -1,6 +1,6 @@
 ;;;
 (defvar *player1* 1)
-(defvar *player2* 2)
+(defvar *player2* -1)
 
 (defun switch-player (player)
   (cond ((= player *player1*) *player2*)
