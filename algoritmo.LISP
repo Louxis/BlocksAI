@@ -14,10 +14,10 @@
            )
 )))
 
-(defun negamax-base (node p player solution expand operators cost &optional (kept-value -1000))
-  (cond ((or (= p 0) (funcall solution node)) (* player (funcall cost node)))
+(defun negamax-base (node p player solution expand operators cost &optional (kept-value most-negative-fixnum ))
+  (cond ((or (= p 0) (funcall solution node player)) (* player (funcall cost node)))
         (t 
-         (let* ((child-nodes (funcall expand node (operators) 'bfs)) (sorted-child (qsort child-nodes #'< cost)))
+         (let* ((child-nodes (funcall expand node (operators) player)))
            (negamax-base-aux child-nodes p kept-value player solution expand operators cost))         
 )))
 
@@ -28,6 +28,23 @@
            (negamax-base-aux 
             (cdr nodes) p 
             current-value player solution expand operators cost)))))
+
+(defun negamax-root (root p player solution expand operators cost)
+  (cond ((or (= p 0) (funcall solution root player)) (* player (funcall cost root)))
+        (t (mapcar #'(lambda (child) (list (negamax-base child p player solution expand operators cost) child)) (funcall expand root (operators) player)))))
+
+(defun negamax-root-rec (root p player solution expand operators cost)
+  (labels ((loop-negamax-aux (nodes p player solution expand operators cost &optional (best-value most-negative-fixnum) (best-node nil))
+             (let* ((current-node-value (negamax-base (car nodes) p player solution expand operators cost)))
+               (cond ((= (length nodes) 1) 
+                      (if (= (max current-node-value best-value) current-node-value) (list current-node-value (car nodes)) (list best-value best-node))) ;get alternative here
+                     (t (cond ((= (max best-value current-node-value) current-node-value) 
+                               (loop-negamax-aux (cdr nodes) p player solution expand operators cost current-node-value (car nodes)))
+                              (t (loop-negamax-aux (cdr nodes) p player solution expand operators cost best-value best-node))))))))                               
+    (cond ((or (= p 0) (funcall solution root player)) (* player (funcall cost root)))
+          (t 
+           (let ((child-nodes (funcall expand root (operators) player)))
+             (loop-negamax-aux child-nodes p player solution expand operators cost))))))     
   
 (defun cost-function (node)
   "Each player 1 (max) occupied cell gives +1, and each player 2 (min) occupied cell gives -1"

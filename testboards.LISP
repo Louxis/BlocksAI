@@ -3,19 +3,6 @@
 	(make-list board-size :initial-element (make-list board-size :initial-element '0))
 )
 
-(defun test-board ()
-	'(
-	(0 0 0 0 2 2 0 0 2 0 2 0 2 0)
-	(0 0 0 0 2 2 0 2 2 2 0 2 2 2)
-	(0 0 0 2 0 0 2 0 2 0 2 0 2 0)
-	(0 0 0 0 0 0 2 2 0 2 2 2 0 2)
-	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
-	(0 0 0 0 0 0 0 2 2 2 0 2 2 2)
-	(0 0 0 0 0 0 2 0 2 0 2 0 2 0)
-	(0 0 0 0 0 0 2 2 0 2 2 2 0 0)
-	(0 0 0 0 2 0 2 0 2 0 2 0 0 0)
-	))
-
 (defun test-board-first ()
 	'(
 	(1 1 0 0 0 0 0 0 0 0 0 0 0 0)
