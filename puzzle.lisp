@@ -102,12 +102,25 @@
                    (t (cons (calculate-made-step (node-pieces (node-state node)) (node-pieces (node-state (node-parent node)))) (steps-aux (node-parent node)))))))
     (reverse (steps-aux node))))
 
+(defun calculate-made-play (current-node parent-node &optional (player 1))
+  (labels ((find-played-coord (current-moves parent-moves)
+             (cond ((null parent-moves) nil)
+                   ((not (member (car parent-moves) current-moves :test #'equal)) (car parent-moves))
+                   (t (find-played-coord current-moves (cdr parent-moves))))))             
+  (let* ((current-board (node-board (node-state current-node))) (parent-board (node-board (node-state parent-node)))
+         (operation (calculate-made-step (node-pieces (node-state current-node)) (node-pieces (node-state parent-node))))
+         (current-moves (possible-block-positions current-board operation player))
+         (parent-moves (possible-block-positions parent-board operation player)))
+    (list operation (find-played-coord current-moves parent-moves)))))
+
+
+
 (defun calculate-made-step (current-position parent-position)
   "Calculates step taken between states"
   (cond ((null parent-position))
-        ((< (nth 0 current-position) (nth 0 parent-position)) "Colocou uma peça 1x1")
-        ((< (nth 1 current-position) (nth 1 parent-position)) "Colocou uma peça 2x2")
-        ((< (nth 2 current-position) (nth 2 parent-position)) "Colocou uma peça cruz")))
+        ((< (nth 0 current-position) (nth 0 parent-position)) 'SQUARE-1X1)
+        ((< (nth 1 current-position) (nth 1 parent-position)) 'SQUARE-2X2)
+        ((< (nth 2 current-position) (nth 2 parent-position)) 'CROSS)))
 ;;;End of node 
 
 ;;;Operations
