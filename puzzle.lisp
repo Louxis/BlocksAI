@@ -1,6 +1,7 @@
 ;;;;Puzzle logic
 ;;;;Made by José Pereira and Lyudmyla Todoriko
-
+(defvar *player1* 1)
+(defvar *player2* -1)
 ;;;Board 
 (defun board-print (board)
   "Prints board in a easier way to read, in a grid with the board size"
@@ -66,8 +67,9 @@
 (defun node-board (node-state)
   (car node-state))
 
-(defun node-pieces (node-state)
-  (second node-state))
+(defun node-pieces (node-state &optional (player 1))
+  (cond ((= player 1) (first(second node-state)))
+        (t (second (second node-state)))))
 
 (defun node-parent (node)
   (cadr node))
@@ -108,7 +110,7 @@
                    ((not (member (car parent-moves) current-moves :test #'equal)) (car parent-moves))
                    (t (find-played-coord current-moves (cdr parent-moves))))))             
   (let* ((current-board (node-board (node-state current-node))) (parent-board (node-board (node-state parent-node)))
-         (operation (calculate-made-step (node-pieces (node-state current-node)) (node-pieces (node-state parent-node))))
+         (operation (calculate-made-step (node-pieces (node-state current-node) player) (node-pieces (node-state parent-node) player)))
          (current-moves (possible-block-positions current-board operation player))
          (parent-moves (possible-block-positions parent-board operation player)))
     (list operation (find-played-coord current-moves parent-moves)))))
@@ -144,37 +146,44 @@
 
 (defun square-1x1 (x y node &optional (player 1))
   "Places a 1x1 square on the board if it is possible and updating the existing pieces on the node"
-  (let ((pieces (node-pieces (node-state node))))
+  (let ((pieces (node-pieces (node-state node) *player1*))
+        (other-pieces (node-pieces (node-state node) *player2*))) 
     (cond ((eq (first pieces) 0) nil)
           (t (list (place-square x y (node-board (node-state node)) player) 
-                   (update-pieces pieces 'square-1x1))))))
+                   (if (= player *player1*) (list (update-pieces pieces 'square-1x1) other-pieces)
+                     (list pieces (update-pieces other-pieces 'square-1x1))))))))
 
 (defun square-2x2(x y node &optional (player 1))
   "Places a 2x2 square on the board if it is possible and updating the existing pieces on the node"
          (labels ((square-aux (x y board cells) 
                   (if (null cells) (place-square x y board player) 
                     (square-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
-           (let ((pieces (node-pieces (node-state node))))
+           (let ((pieces (node-pieces (node-state node) *player1*))
+                 (other-pieces (node-pieces (node-state node) *player2*)))
              (cond ((eq (second pieces) 0) nil)
                    (t (list (square-aux x y (node-board (node-state node)) (block-occupied-cells x y 'square-2x2))
-                            (update-pieces pieces 'square-2x2)))))))
+                            (if (= player *player1*) (list (update-pieces pieces 'square-2x2) other-pieces)
+                              (list pieces (update-pieces other-pieces 'square-2x2)))))))))
+
 
 (defun cross (x y node &optional (player 1))
   "Places a cross (+) on the board if it is possible and updating the existing pieces on the node"
          (labels ((cross-aux (x y board cells) 
                   (if (null cells) (place-square x y board player) 
                     (cross-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
-           (let ((pieces (node-pieces (node-state node))))
+           (let ((pieces (node-pieces (node-state node) player))
+                 (other-pieces (node-pieces (node-state node) *player2*)))
              (cond ((eq (third pieces) 0) nil)
                    (t (list (cross-aux (1+ x) (1+ y) (node-board (node-state node)) (block-occupied-cells x y 'cross))
-                            (update-pieces pieces 'cross)))))))
+                            (if (= player *player1*) (list (update-pieces pieces 'cross) other-pieces)
+                              (list pieces (update-pieces other-pieces 'cross)))))))))
 
 ;;;End of operations
 
 ;;;Expand
 
 (defun solution-nodep (node &optional (player 1)) 
-  (cond ((equal (node-pieces node) '(0 0 0)) t)
+  (cond ((equal (node-pieces node player) '(0 0 0)) t)
         ((null (node-expandp node player)) t)
         (t nil)))
 
