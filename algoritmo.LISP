@@ -17,6 +17,26 @@
              (negamax-base-aux child-nodes p kept-value player solution expand operators cost))         
            ))))
 
+(defun negamax-alphabeta-solo (node p alpha beta player solution expand operators cost &optional (kept-value most-negative-fixnum) (kept-node nil))
+  (labels ((negamax-aux (nodes p alpha beta player solution expand operators cost kept-value kept-node)
+             (cond ((null nodes) (list kept-value alpha beta kept-node))
+                   (t
+                    (let* ((revert-score (negamax-alphabeta (car nodes) (1- p) (* -1 beta) (* -1 alpha) (switch-player player) solution expand operators cost))
+                           (score (if (listp revert-score) (* -1 (car revert-score)) (* -1 revert-score)))
+                           (current-value (max kept-value score))
+                           (current-alpha (max alpha score)))
+                      (if (>= alpha beta)
+                          ;cut the branch
+                          (negamax-aux nil p current-alpha beta player solution expand operators cost current-value kept-node)
+                        ;else don't cut it
+                        (if (> current-value score)
+                            (negamax-aux (cdr nodes) p current-alpha beta player solution expand operators cost current-value kept-node)
+                          (negamax-aux (cdr nodes) p current-alpha beta player solution expand operators cost current-value (car nodes)))))))))
+  (cond ((or (= p 0) (funcall solution node player)) (* player (funcall cost node)))
+        (t (let ((child-nodes (sort (funcall expand node (operators) player) #'< :key cost)))
+             (calculate-made-play (fourth (negamax-aux child-nodes p alpha beta player solution expand operators cost kept-value kept-node)) node))))))
+
+
 (defun negamax-alphabeta (node p alpha beta player solution expand operators cost &optional (kept-value most-negative-fixnum) (kept-node nil))
   (labels ((negamax-aux (nodes p alpha beta player solution expand operators cost kept-value kept-node)
              (cond ((null nodes) (list kept-value alpha beta kept-node))
@@ -35,7 +55,7 @@
 
   (cond ((or (= p 0) (funcall solution node player)) (* player (funcall cost node)))
         (t (let ((child-nodes (sort (funcall expand node (operators) player) #'< :key cost)))
-             (calculate-made-play (fourth (negamax-aux child-nodes p alpha beta player solution expand operators cost kept-value kept-node)) node))))))
+             (negamax-aux child-nodes p alpha beta player solution expand operators cost kept-value kept-node))))))
              
 ;test (negamax-alphabeta-root (test-node-empty) 1 most-negative-fixnum most-positive-fixnum 1 'solution-nodep 'node-expand (operators) 'cost-function)
 (defun negamax-alphabeta-root (root p alpha beta player solution expand operators cost)
@@ -57,9 +77,7 @@
     (cond ((or (= p 0) (funcall solution root player)) (* player (funcall cost root))) ; if for some reason we get a p = 0 or a solution node this could be ommited maybe?
           (t 
            (let ((child-nodes (sort (funcall expand root (operators) player) #'< :key cost)))
-             (list 
-              (calculate-made-play (loop-negamax-aux child-nodes p alpha beta player solution expand operators cost) root player) 
-              (loop-negamax-aux child-nodes p alpha beta player solution expand operators cost)))))))  
+              (calculate-made-play (loop-negamax-aux child-nodes p alpha beta player solution expand operators cost) root player))))))  
 
 ;test (negamax-root (test-node-empty) 1 1 'solution-nodep 'node-expand (operators) 'cost-function)
 (defun negamax-root (root p player solution expand operators cost)
