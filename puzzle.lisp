@@ -1,7 +1,7 @@
 ;;;;Puzzle logic
 ;;;;Made by José Pereira and Lyudmyla Todoriko
 (defvar *player1* 1)
-(defvar *player2* -1)
+(defvar *player2* 2)
 ;;;Board 
 (defun board-print (board)
   "Prints board in a easier way to read, in a grid with the board size"

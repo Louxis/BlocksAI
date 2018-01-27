@@ -5,8 +5,6 @@
 
 (defun test-board-first ()
 	'(
-	(1 1 0 0 0 0 0 0 0 0 0 0 0 0)
-	(1 1 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
@@ -19,6 +17,8 @@
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
 	(0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+	(0 0 0 0 0 0 0 0 0 0 0 0 -1 -1)
+	(0 0 0 0 0 0 0 0 0 0 0 0 -1 -1)
 	))
 
 (defun test-board-game ()
@@ -167,13 +167,13 @@
 	))
 
 (defun test-node-game ()
-  (list (list (test-board-game)'(10 9 12)) nil 0 0 0 0 ))
+  (list (list (test-board-game) '((10 9 12) (10 9 12))) nil 0 0 0 0 ))
 
 (defun test-node-a ()
   (list (list (test-board-a)'(1 10 15)) nil 0 0 0 0 ))
 
 (defun test-node-first()
-  (list (list (test-board-first) '(10 9 15)) nil 0 0 0 4))
+  (list (list (test-board-first) '((10 10 15)(10 9 15))) nil 0 0 0 4))
 
 (defun test-node-b ()
   (list (list (test-board-b)'(1 10 15)) nil 0 0 0 0))
@@ -194,4 +194,4 @@
   (list (list (test-board-complete)'(0 9 15)) nil 0 0 0 0))
 
 (defun test-node-empty (&optional (size 14))
-  (list (list (empty-board size) '((10 10 15) (9 10 15))) nil 0 0 0 0))
+  (list (list (empty-board size) '((10 10 15) (10 10 15))) nil 0 0 0 0))
