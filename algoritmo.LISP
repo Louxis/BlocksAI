@@ -86,7 +86,7 @@
                                              (cond ((= position *player1*) 1) 
                                                    ((= position *player2*) -1) 
                                                    (t 0))) line)) (node-board state))))))
-;
+;aux times
 (defun estimate-time ()
   (let ((start (get-universal-time)))
   (labels ((fibonacci(n)

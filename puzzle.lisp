@@ -55,6 +55,7 @@
         (t ;(format t "Original:~%")
            ;(board-print (node-board (node-state (node-original node)))) 
            ;(format t "Final:~%")
+         (format t "~%~%")
            (board-print (node-board (node-state node))) 
            (format t "~%Pieces 1: ~d~%Pieces 2: ~d~%Player 1 Score: ~d~%Player 2 Score: ~d~%" 
                    (node-pieces (node-state node) *player1*) (node-pieces (node-state node) *player2*) 
@@ -180,9 +181,9 @@
          (labels ((cross-aux (x y board cells) 
                   (if (null cells) (place-square x y board player) 
                     (cross-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
-           (let ((pieces (node-pieces (node-state node) player))
+           (let ((pieces (node-pieces (node-state node) *player1*))
                  (other-pieces (node-pieces (node-state node) *player2*)))
-             (cond ((eq (first (node-pieces (node-state node) player)) 0) nil)
+             (cond ((eq (third (node-pieces (node-state node) player)) 0) nil)
                    (t (list (cross-aux (1+ x) (1+ y) (node-board (node-state node)) (block-occupied-cells x y 'cross))
                             (if (= player *player1*) (list (update-pieces pieces 'cross) other-pieces)
                               (list pieces (update-pieces other-pieces 'cross)))))))))
@@ -324,38 +325,8 @@
                    (t (possible-pos-aux (1+ x) y board)))))    
     (possible-pos-aux 0 0 board)))
 
-;;;heuristic
-(defun to-fill-squares (board)
-  (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 0) 1 0)) line))board))))
-
-(defun filled-squares (board)
-  (apply '+ (apply #'append (mapcar #'(lambda(line) (mapcar #'(lambda(position) (if (= position 1) 1 0)) line))board))))
-
-(defun heuristic-squares (state)
-  (apply '+ (apply #'append 
-                   (mapcar #'(lambda(line) 
-                               (mapcar #'(lambda(position) 
-                                           (cond ((= position 0) 1) 
-                                                 ((= position 1) -1) 
-                                                 (t 0))) line)) (node-board state)))))
-(defun heuristic-custom (state)    
-    (length (apply #'append (mapcar #'(lambda (operation) 
-                           (possible-block-positions (node-board state) operation)) (operators)))))
-
-(defun heuristic-custom-complex (state &optional (sq1mod 3) (sq2mod 2) (crossmod 1))
-  "Heuristic used to benefid boards with less possible places"
-  (flet ((count-squares-aux (board operation)
-           (cond ((eq operation 'square-1x1) (* (length (possible-block-positions board operation)) sq1mod))
-                 ((eq operation 'square-2x2) (* (length (possible-block-positions board operation)) sq2mod))
-                 ((eq operation 'cross) (* (length (possible-block-positions board operation)) crossmod))
-                 (t 0))))       
-    (apply #'+ (mapcar #'(lambda (operation) 
-                           (count-squares-aux (node-board state) operation)) (operators)))))
-
-
-
-;;;end heuristic
 ;;;End expand aux
+
 (defun block-count (board block-type)
   "Used to calculate how many blocks of a certain type exist"
   (labels ((block-count-aux (x y board) 
