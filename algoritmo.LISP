@@ -1,9 +1,10 @@
+
+
 (defun switch-player (player)
   (cond ((= player *player1*) *player2*)
         (t *player1*)))
 ;;;Lexic to registar negamax statistics and time calculations
 (let ((time-left most-positive-fixnum)
-      (start-time 0)
       (time-check 0)
       (time-over nil))
 
@@ -48,8 +49,7 @@
     (- (get-internal-real-time) curr-time)))
 
 (defun time-negamax (node alpha beta player solution expand operators cost time &optional (p 1) (keep nil))
-  (setq time-left (* time 1000)) ;convert seconds to milliseconds  
-  (setq start-time (get-internal-real-time))
+  (setq time-left (* time 1000)) ;convert seconds to milliseconds
   (setq time-check (get-internal-real-time))
   (setq time-over nil)
   (time-aux node p alpha beta player solution expand operators cost keep))
@@ -104,21 +104,14 @@
                   (depth (fourth result)))
              (format t "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took: ~d ms Depth: ~d~%" player (move-writer move) explored cuts (- (get-internal-real-time) start) depth)
              (if (not (null path)) (write-log path result (- (get-internal-real-time) start) player)) ;logging is optional
-             (player-machine (move-parser node move player) (switch-player player) solution expand operators cost time path (1- limit))))))
-                        
-
-(defun start-log (pathname)
-  (with-open-file (out pathname :direction :output :if-exists :supersede :if-does-not-exist :create)
-    (format out "--Log started--")))
-
-(defun write-log (pathname result time player)
-  (let ((move (car result))
-        (explored (second result))
-        (cuts (third result))
-        (depth (fourth result)))
-    (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
-      (format out "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took: ~d ms Depth: ~d~%" player (move-writer move) explored cuts time depth))))
+             (player-machine (move-parser node move player) (switch-player player) solution expand operators cost time path (1- limit))))))                       
 ;;Play Logic
+
+;;Torneio
+(defun jogar (posicao tempo)
+  ;O código foi feito apenas a considerar "nós" uma vez que o torneio poderá usar apenas a parte do "estado" é necessário verificar tal
+  )
+;;Torneio
 
 ;;Nega with memoization
 (let ((tab (make-hash-table)))
