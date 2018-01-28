@@ -29,7 +29,7 @@
          (let* ((v (* -1 (car (clear-negamax (car nodes) (1- p) (* -1 beta) (* -1 alpha) (* -1 color) solution expand operators cost (switch-player player)))))
                 (current-alpha (max alpha v))
                 (keep-value (max bestValue v)))
-           (cond ((< time-left 500) (setq time-over t) ;invalidate result
+           (cond ((< time-left 50) (setq time-over t) ;invalidate result
                   (loop-child nil p current-alpha beta color solution expand operators cost player keep-value next-move)) ;break
                   ((>= current-alpha beta)
                    (loop-child nil p current-alpha beta color solution expand operators cost player keep-value)) ;cut
@@ -46,11 +46,13 @@
 
 (defun time-aux (node p alpha beta player solution expand operators cost keep)
   (setq time-left (- time-left (used-time)))
-  (if (< time-left 500) keep ;don't try to explore any other solution
+  (if (< time-left 50) (end-search keep) ;don't try to explore any other solution
     (let ((result (result-negamax node p alpha beta player solution expand operators cost)))
-      (if time-over keep ;time was over so result gets invalidated
+      (if time-over (end-search keep) ;time was over so result gets invalidated
         (time-aux node (1+ p) alpha beta player solution expand operators cost result)))))
 
+(defun end-search (result)
+  result)
 )
 ;nega
 
