@@ -14,7 +14,7 @@
          (play (calculate-made-play (second result) node player))
          (explored (third result))
          (cuts (fourth result)))        
-    (list play explored cuts)))
+    (list play explored cuts p)))
 
 (defun clear-negamax (node p alpha beta color solution expand operators cost player &optional (explored-nodes 0) (cuts 0))               
   (cond ((or (= p 0) (funcall solution node player)) (list (* color (funcall cost node)))) ;list so we can car
@@ -63,38 +63,62 @@
 ;;;END TIME
 (defun end-search (result)
   result)
+)
+;nega
 
+;;Play Logic
 ;(time-machine (test-node-empty) 2 'solution-nodep 'node-expand (operators) 'cost-function 1)
-(defun time-machine (node player solution expand operators cost time)
+(defun time-machine (node player solution expand operators cost time &optional path)
   (let ((start (get-universal-time)))
-    (progn (machine-play node player solution expand operators cost time 100) (- (get-universal-time) start))))
+    (progn (player-machine node player solution expand operators cost time path 100) (- (get-universal-time) start))))
 
-(defun machine-play (node player solution expand operators cost time &optional (limit most-positive-fixnum) (end-flag nil))
+(defun machine-play (node player solution expand operators cost time &optional (path nil) (limit most-positive-fixnum) (end-flag nil))
   (cond ((= limit 0) node)
         (t 
          (cond ((and end-flag (funcall solution node player)) (format t "Winner is: ~d~%" (assert-winner node)) (node-print node))
-               ((funcall solution node player) (machine-play node (switch-player player) solution expand operators cost time (1- limit) t))
+               ((funcall solution node player) (machine-play node (switch-player player) solution expand operators cost time path (1- limit) t))
                (t
                 (let* ((start (get-internal-real-time))
                        (result (time-negamax node most-negative-fixnum most-positive-fixnum player solution expand operators cost time))
                        (move (car result))
                        (explored (second result))
-                       (cuts (third result)))
-                  (format t "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took:~d ms~%" player move explored cuts (- (get-internal-real-time) start))
-                  (machine-play (move-parser node move player)
-                                (switch-player player) solution expand operators cost time (1- limit))))))))
+                       (cuts (third result))
+                       (depth (fourth result)))
+                  (format t "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took: ~d ms Depth: ~d~%" player (move-writer move) explored cuts (- (get-internal-real-time) start) depth)
+                  (if (not (null path)) (write-log path result (- (get-internal-real-time) start) player)) ;logging is optional
+                  (machine-play (move-parser node move player) (switch-player player) solution expand operators cost time path (1- limit))))))))
+                                
 
-(defun player-machine (node player solution expand operators cost p &optional (limit most-positive-fixnum) (end-flag nil))
+(defun player-machine (node player solution expand operators cost time &optional (path nil) (limit most-positive-fixnum) (end-flag nil))
   (cond ((and end-flag (funcall solution node player)) (format t "Winner is: ~d~%" (assert-winner node)) (node-print node))
         ((funcall solution node player) (player-machine node
-                                                        (switch-player player) solution expand operators cost p (1- limit) t))
+                                                        (switch-player player) solution expand operators cost time path (1- limit) t))
         ((= player *player1*) (node-print node) (player-machine (move-parser node (move-reader node) player)
-                                    (switch-player player) solution expand operators cost p (1- limit)))
-        (t (format t "~%~%Machine is thinking...~%~%")           
-           (player-machine (move-parser node (result-negamax node p most-negative-fixnum most-positive-fixnum player solution expand operators cost) player)
-                           (switch-player player) solution expand operators cost p (1- limit)))))
-)
-;nega
+                                                                (switch-player player) solution expand operators cost time path (1- limit)))
+        (t (format t "~%~%Machine is thinking...~%~%")     
+           (let* ((start (get-internal-real-time))
+                  (result (time-negamax node most-negative-fixnum most-positive-fixnum player solution expand operators cost time))
+                  (move (car result))
+                  (explored (second result))
+                  (cuts (third result))
+                  (depth (fourth result)))
+             (format t "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took: ~d ms Depth: ~d~%" player (move-writer move) explored cuts (- (get-internal-real-time) start) depth)
+             (if (not (null path)) (write-log path result (- (get-internal-real-time) start) player)) ;logging is optional
+             (player-machine (move-parser node move player) (switch-player player) solution expand operators cost time path (1- limit))))))
+                        
+
+(defun start-log (pathname)
+  (with-open-file (out pathname :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (format out "--Log started--")))
+
+(defun write-log (pathname result time player)
+  (let ((move (car result))
+        (explored (second result))
+        (cuts (third result))
+        (depth (fourth result)))
+    (with-open-file (out pathname :direction :output :if-exists :append :if-does-not-exist :create)
+      (format out "~%Player~d played:~s Explored: ~d Alpha Cuts: ~d Took: ~d ms Depth: ~d~%" player (move-writer move) explored cuts time depth))))
+;;Play Logic
 
 ;;Nega with memoization
 (let ((tab (make-hash-table)))
@@ -124,9 +148,9 @@
         (x (first (second play)))
         (y (second (second play))))
     ;(funcall move x y node player)
-    (cond ((eq move 'SQUARE-1X1) (node-create (square-1x1 x y node player) node 0 0 0 0)) 
-          ((eq move 'SQUARE-2X2) (node-create (square-2x2 x y node player) node 0 0 0 0)) 
-          ((eq move 'CROSS) (node-create (cross x y node player) node 0 0 0 0)) 
+    (cond ((eq move 'SQUARE-1X1) (node-create (square-1x1 x y node player) node 0)) 
+          ((eq move 'SQUARE-2X2) (node-create (square-2x2 x y node player) node 0)) 
+          ((eq move 'CROSS) (node-create (cross x y node player) node 0)) 
 )))
 
 (defun move-reader (&optional (node nil))
@@ -146,6 +170,16 @@
               ((eq (car move) 'x) 
                (validate-input (list 'CROSS (list (1- x) (1- y))) node)) ;fix hotspot
               (t (move-reader node))))))))
+
+(defun move-writer (play)
+  "Translates an internal move to an external move"
+  (let ((move (first play))
+        (x (first (second play)))
+        (y (second (second play))))
+    (cond ((eq move 'SQUARE-1X1) (list 'q1 (list x y)))
+          ((eq move 'SQUARE-2x2) (list 'q4 (list x y)))
+          ((eq move 'CROSS) (list 'x (list (1+ x) (1+ y))))))) ;fix hotspot
+      
 ;;Aux move
 
 ;;Costs

@@ -70,8 +70,8 @@
         ((< (player-score node *player1*) (player-score node *player2*)) *player1*)
         (t *player2*)))
 
-(defun node-create (state parent d g h f)
-  (list state parent d g h f))
+(defun node-create (state parent d)
+  (list state parent d))
 
 (defun node-state (node)
   (car node))
@@ -88,15 +88,6 @@
 
 (defun node-depth (node)
   (caddr node))
-
-(defun node-cost (node)
-  (cadddr node))
-
-(defun node-h (node)
-  (nth 4 node))
-
-(defun node-f (node)
-  (nth 5 node))
 
 (defun node-solution-size (node)
   "Calculates the total solution size of a node (without counting with the original root)"
@@ -205,7 +196,7 @@
                     (place-nodes node operation (cdr positions) player))
                    (t (cons (node-create 
                              (funcall operation (first (car positions)) (second (car positions)) node player)
-                             node (1+ (node-depth node)) 0 0 0)
+                             node (1+ (node-depth node)))
                             (place-nodes node operation (cdr positions) player))))))             
     (flet ((expand-node (node operation player)             
              (place-nodes node operation (possible-block-positions (node-board (node-state node)) operation player) player)))
