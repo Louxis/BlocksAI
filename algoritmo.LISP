@@ -2,25 +2,56 @@
   (cond ((= player *player1*) *player2*)
         (t *player1*)))
 ;nega
+(let ((time-left most-positive-fixnum)
+      (start-time 0)
+      (time-check 0)
+      (time-over nil))
+
+(defun used-time ()
+  (let ((curr-time time-check))
+    (setq time-check (get-internal-real-time))
+    (- (get-internal-real-time) curr-time)))
+
 (defun result-negamax (node p alpha beta player solution expand operators cost)
-  (let ((color (if (= player *player1*) 1 -1)))
-  (calculate-made-play (second (clear-negamax node p alpha beta color solution expand operators cost player)) node player)))
+  (let ((color (if (= player *player1*) 1 -1)))    
+    (calculate-made-play (second (clear-negamax node p alpha beta color solution expand operators cost player)) node player)))
 
 (defun clear-negamax (node p alpha beta color solution expand operators cost player)
+  (setq time-left (- time-left (used-time)))
   (cond ((or (= p 0) (funcall solution node player)) (list (* color (funcall cost node)))) ;list so we can car
         (t (let ((child-nodes (sort (funcall expand node (operators) player) #'< :key cost)))
-             (loop-child child-nodes p alpha beta color solution expand operators cost player)))))
+             (loop-child child-nodes p alpha beta color solution expand operators cost player most-negative-fixnum node)))))
 
 (defun loop-child (nodes p alpha beta color solution expand operators cost player &optional (bestValue most-negative-fixnum) (next-move nil))
+  (setq time-left (- time-left (used-time)))
   (cond ((null nodes) (list bestValue next-move))
         (t
          (let* ((v (* -1 (car (clear-negamax (car nodes) (1- p) (* -1 beta) (* -1 alpha) (* -1 color) solution expand operators cost (switch-player player)))))
                 (current-alpha (max alpha v))
                 (keep-value (max bestValue v)))
-           (cond ((>= current-alpha beta) (loop-child nil p current-alpha beta color solution expand operators cost player keep-value)) ;cut
+           (cond ((< time-left 500) (setq time-over t) ;invalidate result
+                  (loop-child nil p current-alpha beta color solution expand operators cost player keep-value next-move)) ;break
+                  ((>= current-alpha beta)
+                   (loop-child nil p current-alpha beta color solution expand operators cost player keep-value)) ;cut
                  (t (if (> v bestValue) 
                         (loop-child (cdr nodes) p current-alpha beta color solution expand operators cost player keep-value (car nodes))                      
                       (loop-child (cdr nodes) p current-alpha beta color solution expand operators cost player keep-value next-move))))))))
+
+(defun time-manager (node alpha beta player solution expand operators cost time &optional (p 1) (keep nil))
+  (setq time-left (* time 1000)) ;convert seconds to milliseconds  
+  (setq start-time (get-internal-real-time))
+  (setq time-check (get-internal-real-time))
+  (setq time-over nil)
+  (time-aux node p alpha beta player solution expand operators cost keep))
+
+(defun time-aux (node p alpha beta player solution expand operators cost keep)
+  (setq time-left (- time-left (used-time)))
+  (if (< time-left 500) keep ;don't try to explore any other solution
+    (let ((result (result-negamax node p alpha beta player solution expand operators cost)))
+      (if time-over keep ;time was over so result gets invalidated
+        (time-aux node (1+ p) alpha beta player solution expand operators cost result)))))
+
+)
 ;nega
 
 (defun move-parser (node play player)
@@ -52,20 +83,20 @@
                (validate-input (list 'CROSS (list (1- x) (1- y))) node)) ;fix hotspot
               (t (move-reader node))))))))
 
-;(time-machine (test-node-empty) 1 'solution-nodep 'node-expand (operators) 'cost-function 5)
-(defun time-machine (node player solution expand operators cost p)
+;(time-machine (test-node-empty) 2 'solution-nodep 'node-expand (operators) 'cost-function 1)
+(defun time-machine (node player solution expand operators cost time)
   (let ((start (get-universal-time)))
-    (progn (machine-play-basic node player solution expand operators cost p 100) (- (get-universal-time) start))))
+    (progn (machine-play-basic node player solution expand operators cost time 100) (- (get-universal-time) start))))
 
-(defun machine-play-basic (node player solution expand operators cost p &optional (limit most-positive-fixnum) (end-flag nil))
+(defun machine-play-basic (node player solution expand operators cost time &optional (limit most-positive-fixnum) (end-flag nil))
   (cond ((= limit 0) node)
         (t 
          (cond ((and end-flag (funcall solution node player)) (format t "Winner is: ~d~%" (assert-winner node)) (node-print node))
-               ((funcall solution node player) (machine-play-basic node (switch-player player) solution expand operators cost p (1- limit) t))
+               ((funcall solution node player) (machine-play-basic node (switch-player player) solution expand operators cost time (1- limit) t))
                (t
                 (machine-play-basic (move-parser node
-                                                 (result-negamax node p most-negative-fixnum most-positive-fixnum player solution expand operators cost) player)
-                                    (switch-player player) solution expand operators cost p (1- limit)))))))
+                                                 (time-manager node most-negative-fixnum most-positive-fixnum player solution expand operators cost time) player)
+                                    (switch-player player) solution expand operators cost time (1- limit)))))))
 
 (defun player-machine (node player solution expand operators cost p &optional (limit most-positive-fixnum) (end-flag nil))
   (cond ((and end-flag (funcall solution node player)) (format t "Winner is: ~d~%" (assert-winner node)) (node-print node))
