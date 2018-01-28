@@ -52,11 +52,22 @@
 (defun node-print (node)
   "Prints node board, pieces remaining, price, h falue and f value"
   (cond ((null node) nil)
-        (t (format t "Original:~%")
-           (board-print (node-board (node-state (node-original node)))) 
-           (format t "Final:~%")
+        (t ;(format t "Original:~%")
+           ;(board-print (node-board (node-state (node-original node)))) 
+           ;(format t "Final:~%")
            (board-print (node-board (node-state node))) 
-           (format t "~%Pieces: ~d~%Depth:~d~%Cost:~d~%F=~d~%H=~d~%" (node-pieces (node-state node)) (node-depth node) (node-cost node) (node-f node) (node-h node)))))
+           (format t "~%Pieces 1: ~d~%Pieces 2: ~d~%Player 1 Score: ~d~%Player 2 Score: ~d~%" 
+                   (node-pieces (node-state node) *player1*) (node-pieces (node-state node) *player2*) 
+                   (player-score node *player1*) (player-score node *player2*)))))
+
+(defun player-score (node player)
+  (let ((pieces (node-pieces (node-state node) player)))
+    (+ (* 1 (first pieces)) (* 4 (second pieces)) (* 5 (third pieces)))))
+
+(defun assert-winner (node)
+  (cond ((= (player-score node *player1*) (player-score node *player2*)) 0)
+        ((< (player-score node *player1*) (player-score node *player2*)) *player1*)
+        (t *player2*)))
 
 (defun node-create (state parent d g h f)
   (list state parent d g h f))
@@ -115,8 +126,6 @@
          (parent-moves (possible-block-positions parent-board operation player)))
     (list operation (find-played-coord current-moves parent-moves)))))
 
-
-
 (defun calculate-made-step (current-position parent-position)
   "Calculates step taken between states"
   (cond ((null parent-position))
@@ -148,7 +157,7 @@
   "Places a 1x1 square on the board if it is possible and updating the existing pieces on the node"
   (let ((pieces (node-pieces (node-state node) *player1*))
         (other-pieces (node-pieces (node-state node) *player2*))) 
-    (cond ((eq (first pieces) 0) nil)
+    (cond ((eq (first (node-pieces (node-state node) player)) 0) nil)
           (t (list (place-square x y (node-board (node-state node)) player) 
                    (if (= player *player1*) (list (update-pieces pieces 'square-1x1) other-pieces)
                      (list pieces (update-pieces other-pieces 'square-1x1))))))))
@@ -160,7 +169,7 @@
                     (square-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
            (let ((pieces (node-pieces (node-state node) *player1*))
                  (other-pieces (node-pieces (node-state node) *player2*)))
-             (cond ((eq (second pieces) 0) nil)
+             (cond ((eq (second (node-pieces (node-state node) player)) 0) nil)
                    (t (list (square-aux x y (node-board (node-state node)) (block-occupied-cells x y 'square-2x2))
                             (if (= player *player1*) (list (update-pieces pieces 'square-2x2) other-pieces)
                               (list pieces (update-pieces other-pieces 'square-2x2)))))))))
@@ -173,7 +182,7 @@
                     (cross-aux (first (first cells)) (second (first cells)) (place-square x y board player) (cdr cells)))))
            (let ((pieces (node-pieces (node-state node) player))
                  (other-pieces (node-pieces (node-state node) *player2*)))
-             (cond ((eq (third pieces) 0) nil)
+             (cond ((eq (first (node-pieces (node-state node) player)) 0) nil)
                    (t (list (cross-aux (1+ x) (1+ y) (node-board (node-state node)) (block-occupied-cells x y 'cross))
                             (if (= player *player1*) (list (update-pieces pieces 'cross) other-pieces)
                               (list pieces (update-pieces other-pieces 'cross)))))))))
@@ -184,7 +193,7 @@
 
 (defun solution-nodep (node &optional (player 1)) 
   (cond ((equal (node-pieces node player) '(0 0 0)) t)
-        ((null (node-expandp node player)) t)
+        ((null (node-expand node (operators) player)) t)
         (t nil)))
 
 (defun node-expand (node operators &optional (player 1))
