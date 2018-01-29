@@ -1,7 +1,6 @@
 (defun empty-board (&optional (board-size 14))
   "Retorna um tabuleiro 14x14 (default) com as casas vazias"
-	(make-list board-size :initial-element (make-list board-size :initial-element '0))
-)
+	(make-list board-size :initial-element (make-list board-size :initial-element '0)))
 
 (defun test-board-first ()
 	'(

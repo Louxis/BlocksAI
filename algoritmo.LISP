@@ -17,7 +17,8 @@
          (cuts (fourth result)))        
     (list play explored cuts p)))
 
-(defun clear-negamax (node p alpha beta color solution expand operators cost player &optional (explored-nodes 0) (cuts 0))               
+(defun clear-negamax (node p alpha beta color solution expand operators cost player &optional (explored-nodes 0) (cuts 0)) 
+  "Core negamax, returns the best value found in the tree with alpha-beta pruning"
   (cond ((or (= p 0) (funcall solution node player)) (list (* color (funcall cost node)))) ;list so we can car
         (t (let ((child-nodes (sort (funcall expand node (operators) player) #'< :key cost)))
              (loop-child child-nodes p alpha beta color solution expand operators cost player most-negative-fixnum node explored-nodes cuts)))))
@@ -25,6 +26,7 @@
 
 
 (defun loop-child (nodes p alpha beta color solution expand operators cost player &optional (bestValue most-negative-fixnum) (next-move nil) (explored-nodes 0) (cuts 0))
+  "Aux function for the negamax, used as a foreach insice the negamax logic, responsible for the alpha beta pruning"
   (setq time-left (- time-left (used-time)))
   (cond ((null nodes) (list bestValue next-move explored-nodes cuts))
         (t ;1 nó analisado
@@ -33,7 +35,7 @@
                 (current-cuts (or (fourth result) 0))
                 (current-alpha (max alpha v))
                 (keep-value (max bestValue v))
-                (total-explored (+ explored-nodes 1)))
+                (total-explored (+ 1 explored-nodes)))
            (cond ((< time-left 50) (setq time-over t) ;invalidate result
                   (loop-child nil p current-alpha beta color solution expand operators cost player keep-value next-move total-explored current-cuts)) ;break
                   ((>= current-alpha beta); 1 corte feito
@@ -44,33 +46,36 @@
 
 ;;;TIME
 (defun used-time ()
+  "Updates time with the elapsed time from last check until now."
   (let ((curr-time time-check))
     (setq time-check (get-internal-real-time))
     (- (get-internal-real-time) curr-time)))
 
 (defun time-negamax (node alpha beta player solution expand operators cost time &optional (p 1) (keep nil))
-  (setq time-left (* time 1000)) ;convert seconds to milliseconds
-  (setq time-check (get-internal-real-time))
-  (setq time-over nil)
-  (time-aux node p alpha beta player solution expand operators cost keep))
+  "Manages time with negamax"
+  (labels ((time-aux (node p alpha beta player solution expand operators cost keep)
+             (setq time-left (- time-left (used-time)))
+             (if (< time-left 50) (end-search keep) ;don't try to explore any other solution
+               (let ((result (result-negamax node p alpha beta player solution expand operators cost)))
+                 (if time-over (end-search keep) ;time was over so result gets invalidated
+                   (time-aux node (1+ p) alpha beta player solution expand operators cost result))))))
 
-(defun time-aux (node p alpha beta player solution expand operators cost keep)
-  (setq time-left (- time-left (used-time)))
-  (if (< time-left 50) (end-search keep) ;don't try to explore any other solution
-    (let ((result (result-negamax node p alpha beta player solution expand operators cost)))
-      (if time-over (end-search keep) ;time was over so result gets invalidated
-        (time-aux node (1+ p) alpha beta player solution expand operators cost result)))))
-;;;END TIME
+           (setq time-left (* time 1000)) ;convert seconds to milliseconds
+           (setq time-check (get-internal-real-time))
+           (setq time-over nil)
+           (time-aux node p alpha beta player solution expand operators cost keep)))
+
 (defun end-search (result)
   result)
 )
+;;;END TIME
 ;nega
 
 ;;Play Logic
 ;(time-machine (test-node-empty) 2 'solution-nodep 'node-expand (operators) 'cost-function 1)
 (defun time-machine (node player solution expand operators cost time &optional path)
   (let ((start (get-universal-time)))
-    (progn (player-machine node player solution expand operators cost time path 100) (- (get-universal-time) start))))
+    (progn (machine-play node player solution expand operators cost time path 100) (- (get-universal-time) start))))
 
 (defun machine-play (node player solution expand operators cost time &optional (path nil) (limit most-positive-fixnum) (end-flag nil))
   (cond ((= limit 0) node)
@@ -110,7 +115,14 @@
 ;;Torneio
 (defun jogar (posicao tempo)
   ;O código foi feito apenas a considerar "nós" uma vez que o torneio poderá usar apenas a parte do "estado" é necessário verificar tal
-  )
+  (let ((posicao-final (if (<= (length posicao) 2) (list posicao nil 0) posicao))) ;Resolve o problema adicionando o resto do nó para funcionar
+        (let* ((resultado (time-negamax posicao-final most-negative-fixnum most-positive-fixnum 1 'solution-nodep 'node-expand (operators) 'cost-function tempo))
+               (jogada (first resultado))
+               (tabuleiro (node-state (move-parser posicao-final jogada 1))))
+          (if (solution-nodep posicao-final 1) 
+              (list nil posicao) ;o jogador já não consegue jogar mais
+            (list (move-writer jogada) tabuleiro)))))
+    
 ;;Torneio
 
 ;;Nega with memoization

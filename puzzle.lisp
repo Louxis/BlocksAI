@@ -109,6 +109,7 @@
     (reverse (steps-aux node))))
 
 (defun calculate-made-play (current-node parent-node &optional (player 1))
+  "Find which movement was used between two nodes."
   (labels ((find-played-coord (current-moves parent-moves)
              (cond ((null parent-moves) nil)
                    ((not (member (car parent-moves) current-moves :test #'equal)) (car parent-moves))
