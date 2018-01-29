@@ -1,3 +1,4 @@
+(in-package :p150221044-150221059)
 ;;;;Puzzle logic
 ;;;;Made by José Pereira and Lyudmyla Todoriko
 
@@ -9,6 +10,34 @@
   (cond ((null board) nil)
         ((eq (length board) 1) (format t "~d~%~%" (car board)))
         (t (format t "~d~%" (car board)) (board-print (cdr board)))))
+;;;New Board Print
+(defun board-print-v2 (board)
+  (format t "  ____                      _ 
+ |  _ \\                    | |
+ | |_) | ___   __ _ _ __ __| |
+ |  _ < / _ \\ / _` | '__/ _  |
+ | |_) | (_) | (_| | | | (_| |
+ |____/ \\___/ \\__,_|_|  \\__,_|~%")
+  (format t " _______________________________  
+|    0 1 2 3 4 5 6 7 8 9_0_1_2_3|
+|                               |~%")
+  (board-lines-print board))
+
+(defun board-lines-print (board &optional (index 0))
+  (cond ((= index 14) (format t " -------------------------------~%"))
+        (t (board-line-print board index) (board-lines-print board (1+ index)))))
+
+(defun board-line-print (board index)
+  (if (< index 10)
+      (format t "|~d  " index)
+    (format t "|~d " index))
+  (line-print (line index board)))
+
+(defun line-print (line)
+  (cond ((= (length line) 1) (format t " ~d|~%" (car line)))
+        (t (format t " ~d" (car line)) (line-print (cdr line)))))
+;;;New Board Print
+
 
 (defun replace-position (index board &optional (value 1))
   "Replace a line in the index of a board"
@@ -57,8 +86,12 @@
            ;(board-print (node-board (node-state (node-original node)))) 
            ;(format t "Final:~%")
          (format t "~%~%")
-           (board-print (node-board (node-state node))) 
-           (format t "~%Pieces 1: ~d~%Pieces 2: ~d~%Player 1 Score: ~d~%Player 2 Score: ~d~%" 
+           (board-print-v2 (node-board (node-state node))) 
+           (format t "|     Pieces P1: ~d     |
+|     Pieces P2: ~d     |
+|     Player 1 Score: ~d       |
+|     Player 2 Score: ~d       |
+ -------------------------------~%" 
                    (node-pieces (node-state node) *player1*) (node-pieces (node-state node) *player2*) 
                    (player-score node *player1*) (player-score node *player2*)))))
 
@@ -320,26 +353,33 @@
 
 ;;;End expand aux
 
-(defun block-count (board block-type)
-  "Used to calculate how many blocks of a certain type exist"
+(defun state-calculator (board &optional (player 1))
+  "Calculates player state present in the game."
+  (list 
+   (- 10 (block-count board 'square-1x1 player)) 
+   (- 10 (block-count board 'square-2x2 player)) 
+   (- 15 (block-count board 'cross player))))
+
+(defun block-count (board block-type &optional (player 1))
+  "Used to calculate how many blocks of a certain type exist."
   (labels ((block-count-aux (x y board) 
              (cond ((= x (max-x board)) (block-count-aux 0 (1+ y) board))
                    ((= y (max-y board)) 0)
-                   ((and (eq (board-cell x y board) 1) (eq block-type 'square-1x1) 
-                         (or (not (eq (board-cell (+ x 1) y board) 1)) (not (cell-inbounds (+ x 1) y board))) 
-                         (or (not (eq (board-cell x (+ y 1) board) 1)) (not (cell-inbounds x (+ y 1) board)))
-                         (or (not(eq (board-cell x (- y 1) board) 1)) (not (cell-inbounds x (- y 1) board)))
-                         (or (not(eq (board-cell (- x 1) y board) 1)) (not (cell-inbounds (- x 1) y board)))) 
+                   ((and (eq (board-cell x y board) player) (eq block-type 'square-1x1) 
+                         (or (not (eq (board-cell (+ x 1) y board) player)) (not (cell-inbounds (+ x 1) y board))) 
+                         (or (not (eq (board-cell x (+ y 1) board) player)) (not (cell-inbounds x (+ y 1) board)))
+                         (or (not(eq (board-cell x (- y 1) board) player)) (not (cell-inbounds x (- y 1) board)))
+                         (or (not(eq (board-cell (- x 1) y board) player)) (not (cell-inbounds (- x 1) y board)))) 
                     (+ 1 (block-count-aux (1+ x) y board)))
-                   ((and (eq (board-cell x y board) 1) (eq block-type 'square-2x2) 
-                         (eq (board-cell (+ x 1) y board) 1) 
-                         (eq (board-cell (+ x 1) (+ y 1) board) 1) 
-                         (eq (board-cell x (+ y 1) board) 1))
+                   ((and (eq (board-cell x y board) player) (eq block-type 'square-2x2) 
+                         (eq (board-cell (+ x 1) y board) player) 
+                         (eq (board-cell (+ x 1) (+ y 1) board) player) 
+                         (eq (board-cell x (+ y 1) board) player))
                     (+ 1 (block-count-aux (1+ x) y board)))
                    ((and (eq (board-cell x y board) 1) (eq block-type 'cross) 
-                         (eq (board-cell x (+ y 1) board) 1) 
-                         (eq (board-cell (+ x 1) (+ y 1) board) 1)
-                         (not (eq (board-cell (+ x 1) y board) 1))) 
+                         (eq (board-cell x (+ y 1) board) player) 
+                         (eq (board-cell (+ x 1) (+ y 1) board) player)
+                         (not (eq (board-cell (+ x 1) y board) player))) 
                     (+ 1 (block-count-aux (1+ x) y board)))
                    (t (+ 0 (block-count-aux (1+ x) y board)))))) 
     (block-count-aux 0 0 board)))

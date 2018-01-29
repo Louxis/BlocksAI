@@ -1,10 +1,9 @@
+(defpackage :p150221044-150221059)
+(in-package :p150221044-150221059)
 ;;O JOGO
 ;;read the other files
+;;Made by José Pereira e Lyudmyla Todoriko
 
-(defpackage :p150221044-150221059)
-
-
-;(in-package :p150221044-150221059)
 
 ;;Place load files here
 ;(load)
@@ -43,6 +42,7 @@
     (if (not (= selector 0)) (start))))
 
 (defun initialize()
+  (logo)
   (format t "~%Welcome to Blokus Duo!~%")
   ;(if (eq (if (not (fboundp 'board-print)) (read-compile 'puzzle)) 'exit) 'exit
   ;  (if (eq (if (not (fboundp 'time-negamax)) (read-compile 'algoritmo)) 'exit) 'exit))
@@ -50,7 +50,8 @@
   (read))
 
 (defun start-player-game ()
-  (let* ((starter (ask-input "Who starts first? (1/2): " 1 2))
+  (controller)
+  (let* ((starter (ask-input "~%Who starts first? (1/2): " 1 2))
          (time (ask-input "How much time can the computer think? (1-10 seconds): " 1 10))
          (log-location (ask-pathname "Where do you want the actions to be logged? Include a filename or nil if a log is not desired!~%")))
     (if (not (null log-location)) (start-log log-location))
@@ -58,7 +59,8 @@
 
 
 (defun start-machine-game ()
-  (let* ((time (ask-input "How much time can the computer think? (1-10): " 1 10))
+  (computers)
+  (let* ((time (ask-input "~%How much time can the computer think? (1-10): " 1 10))
          (log-location (ask-pathname "Where do you want the actions to be logged? Include a filename or nil if a log is not desired!~%")))
     (if (not (null log-location)) (start-log log-location))
     (machine-play (node-empty) 1 'solution-nodep 'node-expand (operators) 'cost-function time log-location)))
@@ -92,3 +94,55 @@
    (cond ((eq filepath 'exit) 'exit)
          ((or (pathnamep filepath) (stringp filepath)) (compile-file filepath :load t))
          (t (format t "~%Invalid file path!~%") (read-compile filename)))))
+
+(defun logo ()
+  (format t 
+" .----------------. .----------------. .----------------. .----------------. .----------------. .----------------. 
+| .--------------. | .--------------. | .--------------. | .--------------. | .--------------. | .--------------. |
+| |   ______     | | |   _____      | | |     ____     | | |  ___  ____   | | | _____  _____ | | |    _______   | |
+| |  |_   _ \\    | | |  |_   _|     | | |   .'    `.   | | | |_  ||_  _|  | | ||_   _||_   _|| | |   /  ___  |  | |
+| |    | |_) |   | | |    | |       | | |  /  .--.  \\  | | |   | |_/ /    | | |  | |    | |  | | |  |  (__ \\_|  | |
+| |    |  __'.   | | |    | |   _   | | |  | |    | |  | | |   |  __'.    | | |  | '    ' |  | | |   '.___`-.   | |
+| |   _| |__) |  | | |   _| |__/ |  | | |  \\  `--'  /  | | |  _| |  \\ \\_  | | |   \\ `--' /   | | |  |`\\____) |  | |
+| |  |_______/   | | |  |________|  | | |   `.____.'   | | | |____||____| | | |    `.__.'    | | |  |_______.'  | |
+| |              | | |              | | |              | | |              | | |              | | |              | |
+| '--------------' | '--------------' | '--------------' | '--------------' | '--------------' | '--------------' |
+ '----------------' '----------------' '----------------' '----------------' '----------------' '----------------'~%"))
+
+(defun computers ()
+  (format t 
+" 	
+        MACHINE       VS         MACHINE
+                             _   _
+   _______________          |*\\_/*|________
+  |  ___________  |        ||_/-\\_|______  |
+  | |           | |        | |           | |
+  | |   0   0   | |        | |   0   0   | |
+  | |     -     | |        | |     -     | |
+  | |   \\___/   | |        | |   \\___/   | |
+  | |___     ___| |        | |___________| |
+  |_____|\\_/|_____|        |_______________|
+    _|__|/ \\|_|_.............._|________|_
+   / ********** \\            / ********** \\
+ /  ************  \\        /  ************  \\
+--------------------      --------------------~%"))
+
+(defun controller ()
+(format t
+"      _=====_                               _=====_
+     / _____ \\                             / _____ \\
+   +.-'_____'-.---------------------------.-'_____'-.+
+  /   |     |  '.       P L A Y E R     .'  |  _  |   \\
+ / ___| /|\\ |___ \\        M O D E      / ___| /_\\ |___ \\
+/ |      |      | ;  __           _   ; | _         _ | ;
+| | <---   ---> | | |__|         |_:> | ||_|       (_)| |
+| |___   |   ___| ;                   ; |___       ___| ;
+|\\    | \\|/ |    /  _     ___      _   \\    | (X) |    /|
+| \\   |_____|  .','' '', |___|  ,'' '', '.  |_____|  .' |
+|  '-.______.-' /       \\      /       \\  '-._____.-'   |
+|               |       |------|       |                |
+|              /\\       /      \\       /\\               |
+|             /  '.___.'        '.___.'  \\              |
+|            /                            \\             | 
+ \\          /                              \\           / 
+  \\________/                                \\_________/~%"))
