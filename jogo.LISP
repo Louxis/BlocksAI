@@ -44,8 +44,8 @@
 (defun initialize()
   (logo)
   (format t "~%Welcome to Blokus Duo!~%")
-  ;(if (eq (if (not (fboundp 'board-print)) (read-compile 'puzzle)) 'exit) 'exit
-  ;  (if (eq (if (not (fboundp 'time-negamax)) (read-compile 'algoritmo)) 'exit) 'exit))
+  (if (eq (if (not (fboundp 'board-print)) (read-compile 'puzzle)) 'exit) 'exit
+    (if (eq (if (not (fboundp 'time-negamax)) (read-compile 'algoritmo)) 'exit) 'exit))
   (format t "Pick a game mode:~% 1. Player vs. Machine~% 2. Machine vs. Machine~% 0. Exit~%")
   (read))
 
